@@ -1,0 +1,11 @@
+<div style="display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0">
+  <mat-card style="width:400px;padding:30px;text-align:center">
+    <h2>Subtitle Translator</h2>
+    <mat-form-field style="width:100%">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" [(ngModel)]="password" (keyup.enter)="login()">
+    </mat-form-field>
+    <br><br>
+    <button mat-raised-button color="primary" (click)="login()">Login</button>
+  </mat-card>
+</div>
