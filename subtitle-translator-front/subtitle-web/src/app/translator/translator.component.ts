@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +18,7 @@ interface FileItem {
   selector: 'app-translator',
   standalone: true,
   imports: [
+    CommonModule,
     FormsModule,
     MatButtonModule,
     MatSelectModule,
@@ -36,7 +38,7 @@ export class TranslatorComponent {
   progress = 0;
   log = '';
 
-  private api = 'http://192.168.0.6:5000/api';
+  private api = 'http://localhost:5000/api';
   private token = localStorage.getItem('token');
 
   constructor(private http: HttpClient) {

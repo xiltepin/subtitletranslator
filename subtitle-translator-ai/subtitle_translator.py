@@ -86,6 +86,7 @@ CRITICAL RULES:
 - No explanations or notes
 - No source language text
 - Preserve line breaks and number of lines
+- Never insert chinese or korean in the output
 
 Text:
 {text}

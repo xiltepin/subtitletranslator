@@ -336,4 +336,4 @@ subtranslate "file.srt" --lang TARGET --test 5
 *Script location: `/home/xiltepin/tools/subtranslator/subtitle_translator.py`*  
 *Ollama host: `192.168.0.6:11434`*  
 *Media server: `\\192.168.0.2\Media`*
-subtranslate "$(pwd)/" --lang ja --model gemma2:27b
+subtranslate "filename" --lang ja --model gemma2:27b

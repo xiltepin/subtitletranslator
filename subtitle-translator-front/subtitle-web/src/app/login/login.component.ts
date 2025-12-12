@@ -17,7 +17,7 @@ export class LoginComponent {
   password = '';
   constructor(private http: HttpClient, private router: Router) {}
   login() {
-    this.http.post<{token:string}>('http://192.168.0.6:5000/api/login', {password: this.password})
+    this.http.post<{token:string}>('http://localhost:5000/api/login', {password: this.password})
       .subscribe(res => {
         localStorage.setItem('token', res.token);
         this.router.navigate(['/translator']);
