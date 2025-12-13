@@ -1,3 +1,16 @@
+@app.route('/api/ollama-models', methods=['GET'])
+@jwt_required()
+def ollama_models():
+    try:
+        proc = subprocess.Popen(['ollama', 'ps'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        stdout, stderr = proc.communicate(timeout=10)
+        if proc.returncode != 0:
+            return jsonify(error=stderr.strip()), 500
+        # Parse model names from output (assuming each line is a model)
+        models = [line.strip() for line in stdout.splitlines() if line.strip()]
+        return jsonify(models=models)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
 # ~/tools/subtranslator/subtitle-translator-back/app.py
 from flask import Flask, request, jsonify
 from flask_cors import CORS

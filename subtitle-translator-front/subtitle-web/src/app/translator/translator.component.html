@@ -28,7 +28,7 @@
 
         <mat-form-field appearance="fill">
           <mat-label>Ollama Model</mat-label>
-          <mat-select [(ngModel)]="selectedModel">
+          <mat-select [(ngModel)]="selectedModel" (openedChange)="loadModels()">
             <mat-option *ngFor="let m of models" [value]="m">{{ m }}</mat-option>
           </mat-select>
         </mat-form-field>

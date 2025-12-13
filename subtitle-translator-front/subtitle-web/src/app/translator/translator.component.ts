@@ -51,8 +51,11 @@ export class TranslatorComponent {
   }
 
   loadModels() {
-    this.http.get<string[]>(`${this.api}/models`, this.headers())
-      .subscribe(m => this.models = m);
+    this.http.get<any>(`${this.api}/ollama-models`, this.headers())
+      .subscribe({
+        next: (res) => this.models = res.models || [],
+        error: () => this.models = []
+      });
   }
 
   loadFolder(path: string) {
