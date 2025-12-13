@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Subtitle Translator using Ollama
-Translates SRT subtitle files using Ollama API
+Subtitle Translator using Ollama - with beautiful progress bar and context support
 """
 
 import argparse
@@ -10,7 +9,8 @@ import re
 import requests
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
+from tqdm import tqdm
 
 # Configuration
 OLLAMA_HOST = "192.168.0.6"
@@ -24,14 +24,12 @@ DEBUG = True
 
 
 def debug_print(message: str):
-    """Print debug messages"""
     if DEBUG:
         timestamp = time.strftime("%H:%M:%S")
         print(f"[DEBUG {timestamp}] {message}")
 
 
 class SubtitleEntry:
-    """Represents a single subtitle entry"""
     def __init__(self, index: int, timestamp: str, text: str):
         self.index = index
         self.timestamp = timestamp
@@ -39,13 +37,10 @@ class SubtitleEntry:
 
 
 def parse_srt(content: str) -> List[SubtitleEntry]:
-    """Parse SRT file content into subtitle entries"""
     debug_print("Starting SRT parsing...")
     entries = []
     blocks = content.strip().split('\n\n')
-    debug_print(f"Found {len(blocks)} blocks in SRT file")
-    
-    for i, block in enumerate(blocks):
+    for block in blocks:
         lines = block.strip().split('\n')
         if len(lines) >= 3:
             try:
@@ -53,355 +48,231 @@ def parse_srt(content: str) -> List[SubtitleEntry]:
                 timestamp = lines[1]
                 text = '\n'.join(lines[2:])
                 entries.append(SubtitleEntry(index, timestamp, text))
-            except ValueError as e:
-                debug_print(f"Warning: Could not parse block {i}: {e}")
+            except ValueError:
                 continue
-    
-    debug_print(f"Successfully parsed {len(entries)} subtitle entries")
+    debug_print(f"Parsed {len(entries)} entries")
     return entries
 
 
 def test_ollama_connection(model: str) -> bool:
-    """Test if Ollama is accessible and model is available"""
-    debug_print(f"Testing connection to Ollama at {OLLAMA_HOST}:{OLLAMA_PORT}")
-    
     try:
         url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/tags"
-        debug_print(f"Checking available models at {url}")
         response = requests.get(url, timeout=5)
         response.raise_for_status()
-        
-        models = response.json().get('models', [])
-        model_names = [m.get('name', '') for m in models]
-        debug_print(f"Available models: {', '.join(model_names)}")
-        
-        if model not in model_names:
-            print(f"Warning: Model '{model}' not found in available models")
-            print(f"Available models: {', '.join(model_names)}")
+        models = [m.get('name', '') for m in response.json().get('models', [])]
+        if model not in models:
+            print(f"Warning: Model '{model}' not available")
             return False
-        
-        debug_print(f"✓ Model '{model}' is available")
         return True
-        
-    except requests.exceptions.ConnectionError:
-        print(f"Error: Cannot connect to Ollama at {OLLAMA_HOST}:{OLLAMA_PORT}")
-        print("Make sure Ollama is running on that host")
-        return False
     except Exception as e:
-        print(f"Error testing Ollama connection: {e}")
+        print(f"Error connecting to Ollama: {e}")
         return False
 
 
-def translate_text(text: str, target_lang: str, model: str, source_lang: str = "auto") -> str:
-    """Translate text using Ollama API"""
+def translate_text(text: str, target_lang: str, model: str, context: str = None, source_lang: str = "auto") -> str:
     url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}/api/generate"
     
     lang_names = {
-        'en': 'English',
-        'es': 'Spanish', 
-        'fr': 'French',
-        'de': 'German',
-        'it': 'Italian',
-        'pt': 'Portuguese',
-        'ja': 'Japanese',
-        'zh': 'Chinese',
-        'ko': 'Korean',
-        'ru': 'Russian',
-        'ar': 'Arabic'
+        'en': 'English', 'es': 'Spanish', 'fr': 'French', 'de': 'German',
+        'it': 'Italian', 'pt': 'Portuguese', 'ja': 'Japanese', 'zh': 'Chinese',
+        'ko': 'Korean', 'ru': 'Russian', 'ar': 'Arabic'
     }
-    
     target_lang_name = lang_names.get(target_lang, target_lang)
     
-    # Extremely strict prompt
-    prompt = f"""Translate to {target_lang_name}. Output ONLY the translation, nothing else.
+    # Build context section
+    context_section = ""
+    if context:
+        context_section = f"""
+CONTEXT: {context}
 
-{text}"""
+Use this context to inform your translation for character names, tone, and terminology.
+
+"""
     
+    # Language-specific guidelines
+    lang_guidelines = ""
+    if target_lang == 'ja':
+        lang_guidelines = """
+For Japanese:
+- Use natural sentence structure
+- Use Hiragana, Katakana, and Kanji appropriately
+- Match politeness level to context
+"""
+    elif target_lang == 'es':
+        lang_guidelines = """
+For Spanish:
+- Use natural, conversational Latin American Spanish
+- Use correct accent marks (á, é, í, ó, ú, ñ)
+- Match formality (tú/usted) to relationships
+"""
+    
+    prompt = f"""Translate to {target_lang_name}.
+{context_section}{lang_guidelines}
+CRITICAL RULES:
+- Output ONLY the {target_lang_name} translation
+- NO Chinese (中文) unless translating TO Chinese
+- NO Korean (한글) unless translating TO Korean  
+- NO Japanese unless translating TO Japanese
+- NO explanations, notes, or commentary
+- Preserve line breaks exactly
+- No preamble like "Translation:"
+
+Text:
+{text}
+
+{target_lang_name}:"""
+
     payload = {
         "model": model,
         "prompt": prompt,
         "stream": False,
-        "options": {
-            "temperature": 0.1,
-            "top_p": 0.8,
-            "num_predict": 100,
-            "stop": ["\n\nCRITICAL", "\n\n注意", "\n\nNote", "CRITICAL RULES", "按照指示"]
-        }
+        "options": {"temperature": 0.1, "top_p": 0.8, "num_predict": 500}
     }
-    
+
     try:
-        debug_print(f"Sending translation request (text length: {len(text)} chars)")
-        start_time = time.time()
-        
-        response = requests.post(url, json=payload, timeout=120)
+        response = requests.post(url, json=payload, timeout=180)
         response.raise_for_status()
+        translation = response.json().get('response', '').strip()
         
-        elapsed = time.time() - start_time
-        debug_print(f"Translation received in {elapsed:.2f}s")
+        # Aggressive cleanup
+        translation = re.sub(r'^(Translation|Note|注意|注释|注|說明|번역|참고|메모|Traducción|Nota).*?[:：]\s*', '', translation, flags=re.MULTILINE | re.IGNORECASE)
+        translation = re.sub(r'^\s*(Translation|Note|Traducción|Nota)\s*$', '', translation, flags=re.MULTILINE | re.IGNORECASE)
         
-        result = response.json()
-        translation = result.get('response', '').strip()
+        # Remove pure Korean lines
+        translation = re.sub(r'^[\uAC00-\uD7A3\s\u3131-\u318E\uFFA0-\uFFDC]+$', '', translation, flags=re.MULTILINE)
         
-        # Aggressive cleanup - remove everything after certain patterns
-        # Stop at any line that starts with CRITICAL, 注意, Note, etc.
-        lines = translation.split('\n')
-        cleaned_lines = []
-        for line in lines:
-            line_stripped = line.strip()
-            # Stop if we hit explanatory text
-            if any(marker in line_stripped for marker in [
-                'CRITICAL RULES',
-                '注意：',
-                '注释：',
-                '說明：',
-                'Translation note:',
-                'Note:',
-                '按照指示',
-                'Output ONLY',
-                'NO explanations',
-                'with the correct',
-                'translation content'
-            ]):
-                break
-            # Skip empty marker lines
-            if line_stripped and not line_stripped.startswith(('1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.')):
-                cleaned_lines.append(line)
+        # Filter CJK for non-Asian target languages
+        if target_lang not in ['ja', 'zh', 'ko']:
+            lines = translation.split('\n')
+            filtered = []
+            for line in lines:
+                cjk = len(re.findall(r'[\u4E00-\u9FFF\u3040-\u309F\u30A0-\u30FF\uAC00-\uD7A3]', line))
+                total = len(line.strip())
+                if total > 0 and (cjk / total) < 0.5:
+                    filtered.append(line)
+                elif total == 0:
+                    filtered.append(line)
+            translation = '\n'.join(filtered)
         
-        translation = '\n'.join(cleaned_lines).strip()
-        
-        # Remove common prefixes
-        translation = re.sub(r'^(Translation:|Japanese translation:|' + target_lang_name + r' translation:)\s*', '', translation, flags=re.IGNORECASE)
-        
-        # Remove any remaining Chinese if translating to Japanese
-        if target_lang == 'ja':
-            # Keep only Japanese/English characters and common punctuation
-            pass  # Don't filter characters as it might remove valid kanji
-        
-        # Final cleanup
-        translation = translation.strip()
-        
-        debug_print(f"Translation result length: {len(translation)} chars")
+        translation = re.sub(r'\n{3,}', '\n\n', translation.strip())
         return translation
-        
-    except requests.exceptions.Timeout:
-        print(f"Timeout translating text. The model may be overloaded.")
-        return text
     except Exception as e:
-        debug_print(f"Error translating: {e}")
+        debug_print(f"Translation error: {e}")
         return text
 
 
 def build_network_path(relative_path: str) -> str:
-    """Build full path from relative path - works with WSL mount paths"""
     debug_print(f"Input path: {relative_path}")
     
-    # If it's already a full WSL mount path, use it directly
-    if relative_path.startswith('/mnt/'):
-        debug_print("Already a WSL mount path, using as-is")
+    if relative_path.startswith('/mnt/media/') or relative_path.startswith('/'):
+        debug_print("Already valid absolute path")
         return relative_path
     
-    # If it's already an absolute Linux path, use it
-    if relative_path.startswith('/'):
-        debug_print("Already an absolute path, using as-is")
-        return relative_path
-    
-    debug_print("Building WSL mount path from relative path")
-    
-    # Remove leading slashes and backslashes
-    relative_path = relative_path.lstrip('\\/').lstrip('\\\\')
-    
-    # If path contains the server address, extract only the part after Media
-    if MEDIA_SERVER in relative_path or f"\\\\{MEDIA_SERVER}" in relative_path:
-        debug_print("Path contains server address, extracting relative part")
+    if '\\\\' in relative_path or MEDIA_SERVER in relative_path:
+        relative_path = relative_path.lstrip('\\/').lstrip('\\\\')
         if MEDIA_BASE in relative_path:
             parts = relative_path.split(MEDIA_BASE, 1)
             if len(parts) > 1:
                 relative_path = parts[1].lstrip('\\/').lstrip('\\\\')
-                debug_print(f"Extracted: {relative_path}")
+        relative_path = relative_path.replace('\\', '/')
+        full_path = f"/mnt/media/{relative_path}"
+        debug_print(f"Converted: {full_path}")
+        return full_path
     
-    # Convert backslashes to forward slashes for Linux
-    relative_path = relative_path.replace('\\', '/')
-    
-    # Build full WSL mount path
-    full_path = f"/mnt/media/{relative_path}"
-    debug_print(f"Final path: {full_path}")
+    full_path = str(Path(relative_path).resolve())
+    debug_print(f"Resolved: {full_path}")
     return full_path
 
 
 def extract_language_from_filename(filename: str) -> str:
-    """Extract language code from filename"""
     match = re.search(r'\.([a-z]{2})(?:\.[^.]+)?\.srt$', filename, re.IGNORECASE)
-    if match:
-        lang = match.group(1)
-        debug_print(f"Extracted language code: {lang}")
-        return lang
-    debug_print("No language code found in filename")
-    return "unknown"
+    return match.group(1) if match else "unknown"
 
 
 def generate_output_filename(input_path: str, target_lang: str) -> str:
-    """Generate output filename by replacing language code"""
-    debug_print(f"Generating output filename with target lang: {target_lang}")
-    
-    output_path = re.sub(
-        r'\.([a-z]{2})(?:\.[^.]+)?\.srt$',
-        f'.{target_lang}.srt',
-        input_path,
-        flags=re.IGNORECASE
-    )
-    
+    output_path = re.sub(r'\.([a-z]{2})(?:\.[^.]+)?\.srt$', f'.{target_lang}.srt', input_path, flags=re.IGNORECASE)
     if output_path == input_path:
         output_path = input_path.replace('.srt', f'.{target_lang}.srt')
-    
-    debug_print(f"Output filename: {output_path}")
     return output_path
 
 
-def translate_subtitle_file(input_path: str, target_lang: str, model: str, max_entries: int = None):
-    """Translate entire subtitle file"""
+def translate_subtitle_file(input_path: str, target_lang: str, model: str, max_entries: int = None, context: str = None):
     print(f"\n{'='*60}")
-    print(f"Subtitle Translation Job Started")
+    print(f"Subtitle Translation Started")
     print(f"{'='*60}")
-    print(f"Input file: {input_path}")
-    print(f"Target language: {target_lang}")
+    print(f"Input: {input_path}")
+    print(f"Target: {target_lang.upper()}")
     print(f"Model: {model}")
+    if context:
+        print(f"Context: {context[:80]}{'...' if len(context) > 80 else ''}")
     print(f"{'='*60}\n")
-    
+
     if not test_ollama_connection(model):
-        raise Exception("Cannot connect to Ollama or model not available")
-    
-    debug_print("Reading subtitle file...")
-    try:
-        with open(input_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        debug_print(f"File read successfully ({len(content)} chars)")
-    except UnicodeDecodeError:
-        debug_print("UTF-8 decoding failed, trying alternative encodings...")
-        for encoding in ['latin-1', 'cp1252', 'iso-8859-1']:
-            try:
-                debug_print(f"Trying encoding: {encoding}")
-                with open(input_path, 'r', encoding=encoding) as f:
-                    content = f.read()
-                debug_print(f"Successfully decoded with {encoding}")
-                break
-            except:
-                continue
-        else:
-            raise Exception("Could not decode subtitle file with any common encoding")
-    
+        raise Exception("Model not available")
+
+    with open(input_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
     entries = parse_srt(content)
-    total_entries = len(entries)
-    
     if max_entries:
         entries = entries[:max_entries]
-        print(f"Processing first {max_entries} entries (test mode)")
-    
-    print(f"Found {total_entries} subtitle entries")
-    
-    source_lang = extract_language_from_filename(input_path)
-    print(f"Source language: {source_lang}")
-    print(f"Target language: {target_lang}\n")
-    
+        print(f"TEST MODE: First {max_entries} entries")
+
+    print(f"Translating {len(entries)} subtitles...\n")
+
     translated_entries = []
     start_time = time.time()
-    
-    for i, entry in enumerate(entries, 1):
-        percent = (i / len(entries)) * 100
-        elapsed = time.time() - start_time
-        avg_time = elapsed / i
-        remaining = avg_time * (len(entries) - i)
-        
-        print(f"Translating [{i}/{len(entries)}] ({percent:.1f}%) | "
-              f"Elapsed: {elapsed:.0f}s | ETA: {remaining:.0f}s", end='\r')
-        
-        translated_text = translate_text(entry.text, target_lang, model, source_lang)
-        translated_entries.append(SubtitleEntry(entry.index, entry.timestamp, translated_text))
-    
+
+    with tqdm(total=len(entries), desc="Translating", unit="line", colour="cyan") as pbar:
+        for entry in entries:
+            translated_text = translate_text(entry.text, target_lang, model, context)
+            translated_entries.append(SubtitleEntry(entry.index, entry.timestamp, translated_text))
+            pbar.update(1)
+
     total_time = time.time() - start_time
-    print(f"\n\n✓ Translation complete in {total_time:.0f}s ({total_time/60:.1f} min)")
-    print(f"  Average: {total_time/len(entries):.2f}s per entry")
-    
-    debug_print("Generating output content...")
-    output_content = []
-    for entry in translated_entries:
-        output_content.append(f"{entry.index}\n{entry.timestamp}\n{entry.text}\n")
-    
+    print(f"\n✓ Complete! {total_time:.1f}s ({total_time/len(entries):.2f}s per line)")
+
     output_path = generate_output_filename(input_path, target_lang)
-    
-    print(f"\nWriting translated subtitles to:")
-    print(f"  {output_path}")
-    
     with open(output_path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(output_content))
-    
-    print(f"\n{'='*60}")
-    print(f"✓ SUCCESS - Translation saved!")
+        for e in translated_entries:
+            f.write(f"{e.index}\n{e.timestamp}\n{e.text}\n\n")
+
+    print(f"\nSaved: {output_path}")
     print(f"{'='*60}\n")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Translate subtitle files using Ollama',
+        description='Ollama Subtitle Translator',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  subtranslate "file.es.srt" --lang ja
-  subtranslate "file.en.srt" --lang es --model gemma2:27b
-  subtranslate "file.srt" --lang en --test 10
+  subtranslate movie.en.srt --lang ja
+  subtranslate series.en.srt --lang ja --context "Horror series 1960s Maine"
+  subtranslate file.srt --lang es --model gemma2:9b --test 10
         """
     )
-    
-    parser.add_argument(
-        'path',
-        help='Path to subtitle file'
-    )
-    
-    parser.add_argument(
-        '--lang', '-l',
-        required=True,
-        help='Target language code (en, es, ja, fr, de, etc.)'
-    )
-    
-    parser.add_argument(
-        '--model', '-m',
-        default=DEFAULT_MODEL,
-        help=f'Ollama model to use (default: {DEFAULT_MODEL})'
-    )
-    
-    parser.add_argument(
-        '--test', '-t',
-        type=int,
-        metavar='N',
-        help='Test mode: only translate first N entries'
-    )
-    
-    parser.add_argument(
-        '--no-debug',
-        action='store_true',
-        help='Disable debug messages'
-    )
-    
+    parser.add_argument('path', help='Path to .srt file')
+    parser.add_argument('--lang', '-l', required=True, help='Target language (en, es, ja, etc.)')
+    parser.add_argument('--model', '-m', default=DEFAULT_MODEL, help=f'Model (default: {DEFAULT_MODEL})')
+    parser.add_argument('--test', '-t', type=int, metavar='N', help='Test: first N entries')
+    parser.add_argument('--context', '-c', help='Movie/series description for context')
+    parser.add_argument('--no-debug', action='store_true', help='Disable debug')
+
     args = parser.parse_args()
-    
     global DEBUG
     DEBUG = not args.no_debug
-    
+
     full_path = build_network_path(args.path)
-    
-    debug_print(f"Checking if file exists: {full_path}")
     if not os.path.exists(full_path):
         print(f"Error: File not found: {full_path}")
         return 1
-    
-    debug_print("File exists, proceeding with translation")
-    
+
     try:
-        translate_subtitle_file(full_path, args.lang, args.model, args.test)
+        translate_subtitle_file(full_path, args.lang, args.model, args.test, args.context)
         return 0
     except Exception as e:
-        print(f"\n{'='*60}")
         print(f"ERROR: {e}")
-        print(f"{'='*60}\n")
         if DEBUG:
             import traceback
             traceback.print_exc()
