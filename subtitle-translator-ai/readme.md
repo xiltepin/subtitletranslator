@@ -34,7 +34,7 @@ cd "/mnt/media/Series/IT Welcome to Derry/Season1/"
 
 ### Basic Syntax
 ```bash
-subtranslate "path/to/subtitle.srt" --lang TARGET_LANGUAGE [--model MODEL_NAME] [--test N]
+subtranslate "path/to/subtitle.srt" --lang TARGET_LANGUAGE [--model MODEL_NAME] [--context "description"] [--test N]
 ```
 
 ### Common Language Codes
@@ -49,122 +49,170 @@ subtranslate "path/to/subtitle.srt" --lang TARGET_LANGUAGE [--model MODEL_NAME] 
 
 ---
 
+## 🎯 Using Context for Better Translations
+
+**Context dramatically improves translation quality!** Always include a brief description of the content.
+
+### Why Use Context?
+- ✅ Better character name handling
+- ✅ Appropriate tone (horror vs comedy vs drama)
+- ✅ Accurate technical terminology
+- ✅ Period-appropriate language
+- ✅ Cultural reference adaptation
+
+### Context Examples
+```bash
+# Horror series
+subtranslate "file.en.srt" --lang ja --context "Horror series 1960s Maine clown"
+
+# War movie
+subtranslate "file.en.srt" --lang es --context "WWII Pacific theater US Marines historical"
+
+# Sci-fi thriller
+subtranslate "file.en.srt" --lang ja --context "Sci-fi thriller alien invasion modern Tokyo"
+
+# Comedy series
+subtranslate "file.en.srt" --lang es --context "Comedy series workplace humor modern office"
+
+# Period drama
+subtranslate "file.en.srt" --lang ja --context "Period drama 1800s Japan samurai feudal era"
+```
+
+---
+
 ## 🌍 English to Japanese Translation
 
-### Fast Translation (2-3 seconds per subtitle)
+### Default (Best Quality) - gemma2:27b
 ```bash
-# Using qwen2.5:7b - Good quality, fast speed
-subtranslate "file.en.srt" --lang ja --model qwen2.5:7b
+# With context (RECOMMENDED)
+subtranslate "file.en.srt" --lang ja --context "Horror series 1960s Maine supernatural clown"
 
-# Test with first 5 entries
-subtranslate "file.en.srt" --lang ja --model qwen2.5:7b --test 5
-```
-
-**Best for**: Quick translations, long subtitle files  
-**Speed**: ~2-3 seconds per entry  
-**Quality**: Good
-
-### High Accuracy Translation (6-7 seconds per subtitle)
-```bash
-# Using qwen2.5:14b - Excellent quality for Asian languages
-subtranslate "file.en.srt" --lang ja --model qwen2.5:14b
-
-# Or use default (qwen2.5:14b is now default)
+# Without context
 subtranslate "file.en.srt" --lang ja
 
-# Test with first 5 entries
-subtranslate "file.en.srt" --lang ja --test 5
+# Test first
+subtranslate "file.en.srt" --lang ja --context "Horror 1960s" --test 5
 ```
 
-**Best for**: Best Japanese translation quality  
-**Speed**: ~6-7 seconds per entry  
+**Model**: `gemma2:27b` (default)  
+**Speed**: ~2-3 seconds per entry  
 **Quality**: Excellent
 
-### Maximum Quality (Slower)
+### Fast Translation - gemma2:9b
 ```bash
-# Using qwen2.5:32b - Best quality, slower
-subtranslate "file.en.srt" --lang ja --model qwen2.5:32b
+# With context
+subtranslate "file.en.srt" --lang ja --model gemma2:9b --context "Action movie explosions"
 
-# Test first
-subtranslate "file.en.srt" --lang ja --model qwen2.5:32b --test 5
+# Test mode
+subtranslate "file.en.srt" --lang ja --model gemma2:9b --test 5
 ```
 
-**Best for**: Professional translations, short files  
-**Speed**: ~10-15 seconds per entry  
-**Quality**: Best
+**Speed**: ~1-2 seconds per entry  
+**Quality**: Good
 
 ---
 
 ## 🌍 English to Spanish Translation
 
-### Fast Translation (1-2 seconds per subtitle)
+### Default (Best Quality) - gemma2:27b
 ```bash
-# Using gemma2:9b - Fast and good for European languages
-subtranslate "file.en.srt" --lang es --model gemma2:9b
+# With context (RECOMMENDED)
+subtranslate "file.en.srt" --lang es --context "Horror series Stephen King 1960s Maine"
 
-# Test with first 5 entries
+# Without context
+subtranslate "file.en.srt" --lang es
+
+# Test first
+subtranslate "file.en.srt" --lang es --context "Horror series" --test 5
+```
+
+**Model**: `gemma2:27b` (default)  
+**Speed**: ~2-3 seconds per entry  
+**Quality**: Excellent
+
+### Fast Translation - gemma2:9b
+```bash
+# With context
+subtranslate "file.en.srt" --lang es --model gemma2:9b --context "Comedy workplace"
+
+# Test mode
 subtranslate "file.en.srt" --lang es --model gemma2:9b --test 5
 ```
 
-**Best for**: Quick translations, everyday use  
 **Speed**: ~1-2 seconds per entry  
 **Quality**: Good
-
-### High Accuracy Translation (3-5 seconds per subtitle)
-```bash
-# Using gemma2:27b - Excellent quality for European languages
-subtranslate "file.en.srt" --lang es --model gemma2:27b
-
-# Test with first 5 entries
-subtranslate "file.en.srt" --lang es --model gemma2:27b --test 5
-```
-
-**Best for**: Best Spanish translation quality  
-**Speed**: ~3-5 seconds per entry  
-**Quality**: Excellent
-
-### Alternative Option
-```bash
-# Using qwen2.5:14b - Also works well for Spanish
-subtranslate "file.en.srt" --lang es --model qwen2.5:14b
-```
 
 ---
 
 ## 💡 Practical Examples
 
-### Example 1: Translate IT Welcome to Derry (Spanish → Japanese)
+### Example 1: IT Welcome to Derry (English → Japanese)
 ```bash
-# Navigate to the episode folder
+# Navigate to episode folder
 cd "/mnt/media/Series/IT Welcome to Derry/Season1/IT.Welcome.to.Derry.S01E01.1080p.HEVC.x265-MeGusta/"
 
-# Fast translation
-subtranslate "IT.Welcome.to.Derry.S01E01.1080p.HEVC.x265-MeGusta.es.sdh.srt" --lang ja --model qwen2.5:7b
+# With context for best quality
+subtranslate "IT.Welcome.to.Derry.S01E01.1080p.HEVC.x265-MeGusta.en.srt" --lang ja \
+  --context "Horror series 1960s Derry Maine, Stephen King IT prequel, Pennywise clown terrorizing town"
 
-# High quality translation
-subtranslate "IT.Welcome.to.Derry.S01E01.1080p.HEVC.x265-MeGusta.es.sdh.srt" --lang ja
+# Quick test first (recommended)
+subtranslate "IT.Welcome.to.Derry.S01E01.1080p.HEVC.x265-MeGusta.en.srt" --lang ja \
+  --context "Horror series 1960s Maine clown" --test 5
 ```
 
-### Example 2: Translate Movie (English → Spanish)
+### Example 2: War Movie (English → Spanish)
 ```bash
-# Navigate to movie folder
-cd "/mnt/media/Movies/Alita Battle Angel/"
+cd "/mnt/media/Movies/Saving Private Ryan/"
 
-# Fast translation
-subtranslate "Alita.Battle.Angel.2019.en.srt" --lang es --model gemma2:9b
+# With military context
+subtranslate "Saving.Private.Ryan.1998.en.srt" --lang es \
+  --context "WWII D-Day Normandy invasion US Army military drama historical 1944"
 
-# High quality translation
-subtranslate "Alita.Battle.Angel.2019.en.srt" --lang es --model gemma2:27b
+# Test first
+subtranslate "Saving.Private.Ryan.1998.en.srt" --lang es \
+  --context "WWII military historical" --test 5
 ```
 
-### Example 3: Test Before Full Translation
+### Example 3: Sci-Fi Series (English → Japanese)
 ```bash
-# Always test with first 5-10 entries before running full translation
-subtranslate "$(pwd)/subtitle.en.srt" --lang ja --test 5
+cd "/mnt/media/Series/The Expanse/"
 
-# If satisfied, run full translation
-subtranslate "$(pwd)/subtitle.en.srt" --lang ja
+# With sci-fi context
+subtranslate "The.Expanse.S01E01.en.srt" --lang ja \
+  --context "Sci-fi space opera future solar system politics space warfare"
 ```
+
+### Example 4: Comedy (English → Spanish)
+```bash
+cd "/mnt/media/Series/The Office/"
+
+# With comedy workplace context
+subtranslate "The.Office.S01E01.en.srt" --lang es \
+  --context "Comedy mockumentary office workplace humor awkward situations"
+```
+
+---
+
+## 📚 Context Writing Tips
+
+### Good Context Examples:
+✅ `"Horror series 1960s Maine supernatural clown Stephen King"`  
+✅ `"WWII Pacific theater US Marines historical accurate military"`  
+✅ `"Sci-fi thriller AI rebellion cyberpunk dystopian future"`  
+✅ `"Comedy workplace mockumentary awkward humor modern office"`  
+✅ `"Period drama 1800s Victorian England aristocracy romance"`
+
+### What to Include:
+- **Genre**: horror, comedy, drama, thriller, sci-fi
+- **Setting**: time period, location
+- **Themes**: supernatural, military, workplace, romance
+- **Tone**: serious, humorous, dark, lighthearted
+- **Key elements**: character types, situations
+
+### Keep It Concise:
+- 5-15 words is ideal
+- Focus on key distinctive elements
+- Use keywords, not full sentences
 
 ---
 
@@ -172,11 +220,10 @@ subtranslate "$(pwd)/subtitle.en.srt" --lang ja
 
 | Model | Languages | Speed | Quality | Best For |
 |-------|-----------|-------|---------|----------|
-| `qwen2.5:7b` | Asian (JA/ZH/KO) | ⚡⚡⚡ Fast | ⭐⭐⭐ Good | Quick Japanese/Chinese/Korean |
-| `qwen2.5:14b` | Asian (JA/ZH/KO) | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | Best Japanese/Chinese/Korean |
-| `qwen2.5:32b` | Asian (JA/ZH/KO) | ⚡ Slow | ⭐⭐⭐⭐⭐ Best | Professional Asian languages |
-| `gemma2:9b` | European (ES/FR/DE) | ⚡⚡⚡ Fast | ⭐⭐⭐ Good | Quick Spanish/French/German |
-| `gemma2:27b` | European (ES/FR/DE) | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | Best Spanish/French/German |
+| `gemma2:27b` | All | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | **DEFAULT** - Best overall |
+| `gemma2:9b` | All | ⚡⚡⚡ Fast | ⭐⭐⭐ Good | Quick translations |
+| `gemma3:12b` | All | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | Alternative quality option |
+| `gpt-oss:20b` | All | ⚡ Slow | ⭐⭐⭐ Good | Not recommended |
 
 ---
 
@@ -184,19 +231,19 @@ subtranslate "$(pwd)/subtitle.en.srt" --lang ja
 
 ### Check Available Models
 ```bash
-curl http://192.168.0.6:11434/api/tags
+ollama ls
 ```
 
 ### Install New Models
 ```bash
-# Install a fast model
-ollama pull qwen2.5:7b
+# Install fast model
+ollama pull gemma2:9b
 
-# Install a high-quality model
+# Install high-quality model (already installed)
 ollama pull gemma2:27b
 
-# Install maximum quality model
-ollama pull qwen2.5:32b
+# Install alternative
+ollama pull gemma3:12b
 ```
 
 ### Navigate and Find Subtitles
@@ -218,17 +265,20 @@ subtranslate "/mnt/media/Series/Long/Path/To/File/subtitle.srt" --lang ja
 
 # Use $(pwd) when you're in the same folder
 cd "/mnt/media/Series/Long/Path/To/File/"
-subtranslate "$(pwd)/subtitle.srt" --lang ja
+subtranslate "subtitle.srt" --lang ja --context "genre description"
 ```
 
 ---
 
 ## ⚙️ Optional Flags
 
-### Test Mode
+### Test Mode (ALWAYS RECOMMENDED)
 ```bash
-# Translate only first 10 entries to test quality/speed
-subtranslate "file.srt" --lang ja --test 10
+# Test first 5 entries before full translation
+subtranslate "file.srt" --lang ja --context "horror 1960s" --test 5
+
+# Test first 10 entries
+subtranslate "file.srt" --lang es --test 10
 ```
 
 ### Disable Debug Messages
@@ -237,24 +287,33 @@ subtranslate "file.srt" --lang ja --test 10
 subtranslate "file.srt" --lang ja --no-debug
 ```
 
+### Specify Model
+```bash
+# Use faster model
+subtranslate "file.srt" --lang es --model gemma2:9b --context "comedy"
+
+# Use default (gemma2:27b)
+subtranslate "file.srt" --lang ja --context "sci-fi"
+```
+
 ### Combine Flags
 ```bash
-# Test with specific model and no debug messages
-subtranslate "file.srt" --lang es --model gemma2:9b --test 5 --no-debug
+# Test with context, specific model, no debug
+subtranslate "file.srt" --lang es --model gemma2:9b \
+  --context "war military WWII" --test 5 --no-debug
 ```
 
 ---
 
-## 📝 Output Files
+## 📁 Output Files
 
 Translated files are saved in the **same directory** with the new language code:
-
 ```
-Input:  IT.Welcome.to.Derry.S01E01.es.sdh.srt
+Input:  IT.Welcome.to.Derry.S01E01.en.srt
 Output: IT.Welcome.to.Derry.S01E01.ja.srt
 
-Input:  movie.en.srt
-Output: movie.es.srt
+Input:  movie.es.srt
+Output: movie.en.srt
 ```
 
 ---
@@ -278,25 +337,24 @@ subtranslate "/mnt/media/Series/Name With Spaces/file.srt" --lang ja
 
 ### Model Not Available
 ```bash
-# Pull the model first
-ollama pull qwen2.5:14b
-
 # Check available models
-curl http://192.168.0.6:11434/api/tags
+ollama ls
+
+# Pull missing model
+ollama pull gemma2:27b
 ```
 
 ### Ollama Not Responding
 ```bash
-# Check if Ollama is running on 192.168.0.6
+# Check if Ollama is running
 curl http://192.168.0.6:11434/api/tags
 
-# If not working, check Ollama service on the host machine
+# If not working, check Ollama service on 192.168.0.6
 ```
 
 ---
 
 ## 📌 Quick Reference Summary
-
 ```bash
 # Mount media share
 sudo mount -t drvfs '\\192.168.0.2\Media' /mnt/media
@@ -304,20 +362,15 @@ sudo mount -t drvfs '\\192.168.0.2\Media' /mnt/media
 # Navigate to media
 cd /mnt/media/Series/  # or /mnt/media/Movies/
 
-# Fast English → Japanese
-subtranslate "file.en.srt" --lang ja --model qwen2.5:7b
+# RECOMMENDED: Always use context for best quality
+subtranslate "file.en.srt" --lang ja --context "horror 1960s Maine clown"
+subtranslate "file.en.srt" --lang es --context "war WWII military"
 
-# Best English → Japanese  
-subtranslate "file.en.srt" --lang ja
+# Test first (5-10 entries)
+subtranslate "file.srt" --lang ja --context "description" --test 5
 
-# Fast English → Spanish
+# Fast translation (less accurate)
 subtranslate "file.en.srt" --lang es --model gemma2:9b
-
-# Best English → Spanish
-subtranslate "file.en.srt" --lang es --model gemma2:27b
-
-# Always test first!
-subtranslate "file.srt" --lang TARGET --test 5
 ```
 
 ---
@@ -326,14 +379,25 @@ subtranslate "file.srt" --lang TARGET --test 5
 
 1. **Mount the share**: `sudo mount -t drvfs '\\192.168.0.2\Media' /mnt/media`
 2. **Navigate to folder**: `cd /mnt/media/Series/ShowName/`
-3. **Test translation**: `subtranslate "file.srt" --lang TARGET --test 5`
+3. **Test with context**: `subtranslate "file.srt" --lang ja --context "genre time period" --test 5`
 4. **Check quality**: Open the output file to verify
-5. **Run full translation**: `subtranslate "file.srt" --lang TARGET`
-6. **Repeat for other files**: Use the same model if quality is good
+5. **Run full translation**: `subtranslate "file.srt" --lang ja --context "same context"`
+6. **Repeat for other files**: Use the same context and model if quality is good
+
+---
+
+## 🌟 Pro Tips
+
+- **Always test first** with `--test 5` before translating full files
+- **Always use context** for 30-50% better translation quality
+- **Keep context concise** - 5-15 keywords is perfect
+- **Use gemma2:27b** (default) for best quality
+- **Use gemma2:9b** when speed matters more than quality
+- **Check the output** after test mode before running full translation
 
 ---
 
 *Script location: `/home/xiltepin/tools/subtranslator/subtitle_translator.py`*  
+*Default model: `gemma2:27b`*  
 *Ollama host: `192.168.0.6:11434`*  
 *Media server: `\\192.168.0.2\Media`*
-subtranslate "filename" --lang ja --model gemma2:27b
