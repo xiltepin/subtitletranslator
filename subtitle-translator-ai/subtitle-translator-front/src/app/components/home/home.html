@@ -1,66 +1,122 @@
 <div class="row">
-  <div class="col-lg-8 mx-auto">
-    <div class="card shadow">
-      <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Translate Subtitles with Ollama</h4>
+  <div class="col-lg-10 mx-auto">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-gradient bg-primary text-white text-center py-4">
+        <h3 class="mb-0 fw-bold">Subtitle Translator AI con Ollama</h3>
       </div>
-      <div class="card-body">
+      <div class="card-body p-5">
+
+        <!-- Spinner bonito mientras carga la lista inicial de archivos -->
+        <div class="text-center my-5 py-5" *ngIf="loading">
+          <div class="spinner-border text-primary" role="status" style="width: 5rem; height: 5rem;">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <h3 class="mt-4 text-primary fw-bold">Cargando tu biblioteca de subtítulos...</h3>
+          <p class="text-muted fs-5">Esto puede tardar 10-30 segundos la primera vez<br>
+             Explorando Series y Movies en /mnt/media</p>
+          <div class="mt-4">
+            <div class="spinner-grow text-secondary" style="width: 2rem; height: 2rem;"></div>
+            <div class="spinner-grow text-info" style="width: 2rem; height: 2rem;"></div>
+            <div class="spinner-grow text-success" style="width: 2rem; height: 2rem;"></div>
+          </div>
+        </div>
+
         <form (ngSubmit)="translate()" #form="ngForm">
-          <div class="mb-3">
-            <label class="form-label fw-bold">Subtitle File</label>
-            <select class="form-select" [(ngModel)]="selectedFile" name="file" required>
-              <option value="">-- Select a .srt file --</option>
-              <option *ngFor="let file of files" [value]="file.path">
+
+          <!-- Selección de archivo -->
+          <!-- Selección de archivo con buscador -->
+          <div class="mb-4">
+            <label class="form-label fw-bold fs-5">Archivo de subtítulos</label>
+            <input type="text" class="form-control form-control-lg" [(ngModel)]="searchTerm" name="searchTerm" placeholder="Busca por nombre de película o serie..." [disabled]="translating">
+            <div class="list-group mt-2" style="max-height: 400px; overflow-y: auto;" *ngIf="searchTerm">
+              <button type="button" class="list-group-item list-group-item-action" 
+                      *ngFor="let file of files | filter:searchTerm:'relative'"
+                      (click)="selectFile(file); searchTerm = file.relative"
+                      [disabled]="translating">
                 {{ file.relative }}
-              </option>
-            </select>
+              </button>
+            </div>
+            <small class="text-muted" *ngIf="!searchTerm">Escribe para buscar entre los 320 archivos</small>
+            <small class="text-success" *ngIf="selectedFile">Seleccionado: {{ getFileName(selectedFile) }}</small>
           </div>
 
-          <div class="row mb-3">
+          <div class="row mb-4">
+            <!-- Idioma destino -->
             <div class="col-md-4">
-              <label class="form-label fw-bold">Target Language</label>
-              <input type="text" class="form-control" [(ngModel)]="lang" name="lang" placeholder="ja, es, fr..." required>
+              <label class="form-label fw-bold fs-5">Idioma destino</label>
+              <input type="text" class="form-control form-control-lg" [(ngModel)]="lang" name="lang" 
+                     placeholder="ja, es, fr, de..." required [disabled]="translating">
             </div>
+
+            <!-- Modelo Ollama -->
             <div class="col-md-8">
-              <label class="form-label fw-bold">Model</label>
-              <select class="form-select" [(ngModel)]="model" name="model">
+              <label class="form-label fw-bold fs-5">Modelo Ollama</label>
+              <select class="form-select form-select-lg" [(ngModel)]="model" name="model" [disabled]="translating">
                 <option *ngFor="let m of models" [value]="m">{{ m }}</option>
               </select>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold">Context (Highly Recommended)</label>
-            <textarea class="form-control" [(ngModel)]="context" name="context" rows="3"
-              placeholder="e.g. Horror series 1960s Maine supernatural clown"></textarea>
+          <!-- Contexto -->
+          <div class="mb-4">
+            <label class="form-label fw-bold fs-5">Contexto (¡Muy recomendado para mejor calidad!)</label>
+            <textarea class="form-control form-control-lg" [(ngModel)]="context" name="context" rows="4"
+                      placeholder="Ej: Horror series 1960s Maine supernatural clown Stephen King"
+                      [disabled]="translating"></textarea>
           </div>
 
-          <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" [(ngModel)]="testMode" name="testMode" id="testMode">
-            <label class="form-check-label" for="testMode">
-              Test Mode (translate only first 5 lines)
+          <!-- Modo test -->
+          <div class="mb-4 form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="testMode" [(ngModel)]="testMode" name="testMode" [disabled]="translating">
+            <label class="form-check-label fw-bold fs-5" for="testMode">
+              Modo Prueba (traducir solo las primeras 5 líneas)
             </label>
           </div>
 
-          <button type="submit" class="btn btn-success btn-lg" [disabled]="loading || !selectedFile || !lang">
-            {{ testMode ? 'Test Translation' : 'Translate Full File' }}
-          </button>
+          <!-- Botón + Progress Bar Chingona -->
+          <div class="d-flex align-items-center">
+            <button type="submit" class="btn btn-success btn-lg px-5 py-3 me-4" 
+                    [disabled]="translating || !selectedFile || !lang">
+              <span class="fw-bold fs-4">
+                {{ testMode ? 'Probar Traducción' : 'Traducir Archivo Completo' }}
+              </span>
+            </button>
+
+            <!-- Progress Bar Bien Chingona -->
+            <div class="flex-grow-1" *ngIf="translating">
+              <div class="progress" style="height: 50px; border-radius: 25px; overflow: hidden;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated fw-bold fs-3"
+                     [class.bg-success]="progress >= 100"
+                     [class.bg-info]="progress < 70"
+                     [class.bg-warning]="progress >= 70 && progress < 100"
+                     role="progressbar"
+                     [style.width.%]="progress"
+                     [attr.aria-valuenow]="progress"
+                     aria-valuemin="0" aria-valuemax="100">
+                  <span class="text-dark">{{ progress }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </form>
 
-        <div class="mt-4" *ngIf="loading">
-          <div class="spinner-border text-primary" role="status"></div>
-          <span class="ms-2">Processing... This may take a while.</span>
-        </div>
+        <!-- Log en vivo -->
+        <div class="mt-5" *ngIf="output">
+          <h4 class="fw-bold text-primary">Log en vivo</h4>
+          <pre class="bg-dark text-light p-4 rounded shadow-lg" 
+               style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; font-size: 1rem;">{{ output }}</pre>
 
-        <div class="mt-4" *ngIf="output">
-          <h5>Output Log</h5>
-          <pre class="bg-light p-3 border rounded" style="white-space: pre-wrap;">{{ output }}</pre>
-
-          <div class="alert alert-success" *ngIf="outputFile">
-            Translation completed!<br>
-            <strong>Output file:</strong> {{ outputFile }}
+          <!-- Mensaje final de éxito -->
+          <div class="alert alert-success alert-dismissible fade show mt-4 shadow-lg" *ngIf="outputFile">
+            <h4 class="alert-heading">¡Traducción completada exitosamente! 🎉🔥</h4>
+            <p class="fs-5 mb-0">
+              <strong>Archivo generado:</strong><br>
+              <code class="bg-light p-2 rounded">{{ outputFile }}</code>
+            </p>
           </div>
         </div>
+
       </div>
     </div>
   </div>
