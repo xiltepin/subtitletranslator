@@ -1,0 +1,67 @@
+<div class="row">
+  <div class="col-lg-8 mx-auto">
+    <div class="card shadow">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Translate Subtitles with Ollama</h4>
+      </div>
+      <div class="card-body">
+        <form (ngSubmit)="translate()" #form="ngForm">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Subtitle File</label>
+            <select class="form-select" [(ngModel)]="selectedFile" name="file" required>
+              <option value="">-- Select a .srt file --</option>
+              <option *ngFor="let file of files" [value]="file.path">
+                {{ file.relative }}
+              </option>
+            </select>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-bold">Target Language</label>
+              <input type="text" class="form-control" [(ngModel)]="lang" name="lang" placeholder="ja, es, fr..." required>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-bold">Model</label>
+              <select class="form-select" [(ngModel)]="model" name="model">
+                <option *ngFor="let m of models" [value]="m">{{ m }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Context (Highly Recommended)</label>
+            <textarea class="form-control" [(ngModel)]="context" name="context" rows="3"
+              placeholder="e.g. Horror series 1960s Maine supernatural clown"></textarea>
+          </div>
+
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" [(ngModel)]="testMode" name="testMode" id="testMode">
+            <label class="form-check-label" for="testMode">
+              Test Mode (translate only first 5 lines)
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-success btn-lg" [disabled]="loading || !selectedFile || !lang">
+            {{ testMode ? 'Test Translation' : 'Translate Full File' }}
+          </button>
+        </form>
+
+        <div class="mt-4" *ngIf="loading">
+          <div class="spinner-border text-primary" role="status"></div>
+          <span class="ms-2">Processing... This may take a while.</span>
+        </div>
+
+        <div class="mt-4" *ngIf="output">
+          <h5>Output Log</h5>
+          <pre class="bg-light p-3 border rounded" style="white-space: pre-wrap;">{{ output }}</pre>
+
+          <div class="alert alert-success" *ngIf="outputFile">
+            Translation completed!<br>
+            <strong>Output file:</strong> {{ outputFile }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

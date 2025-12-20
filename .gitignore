@@ -76,3 +76,6 @@ subtitle-translator-ai/subtitle-translator-front/node_modules/
 
 # Ignorar el entorno virtual global que usas en translate.sh
 subtitle-env/
+
+# Entorno virtual externo recomendado
+~/subtitle-translator-venv/
