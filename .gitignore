@@ -1,0 +1,78 @@
+# Python general
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Entorno virtual que mencionas en translate.sh
+~/subtitle-env/
+
+# Flask
+instance/
+.webassets-cache
+.flask_session/
+
+# Logs y bases de datos
+*.log
+*.sqlite
+*.sqlite3
+
+# Archivos de configuración local
+.env
+.local
+config.local.py
+
+# Angular / Node.js
+node_modules/
+dist/
+.build/
+.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Builds de Angular
+subtitle-translator-ai/subtitle-translator-front/dist/
+subtitle-translator-ai/subtitle-translator-front/.angular/cache/
+
+# Archivos temporales de editores
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.code-workspace
+
+# Cobertura de tests
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.pytest_cache/
+
+# Archivos generados por el proyecto que no queremos versionar
+# (pero sí mantener los originales que ya tienes)
+subtitle-translator-ai/subtitle-translator-back/venv/
+subtitle-translator-ai/subtitle-translator-front/node_modules/
+
+# Opcional: si no quieres versionar los builds finales
+# subtitle-translator-ai/subtitle-translator-front/dist/
+
+# Ignorar el entorno virtual global que usas en translate.sh
+subtitle-env/
