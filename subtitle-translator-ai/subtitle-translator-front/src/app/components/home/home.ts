@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ApiService, SubtitleFile } from '../../services/api';
 import { FilterPipe } from '../../pipes/filter-pipe';
 
+declare var bootstrap: any; // Para usar Bootstrap Modal
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -122,10 +124,12 @@ export class HomeComponent implements OnInit, OnDestroy {
             console.log('[SSE progress] updating to', data.percent, '%');
             this.progress = data.percent;
             console.log('[SSE progress] progress is now:', this.progress);
+            this.cdr.detectChanges();
           });
         } else if (data.type === 'log') {
           this.zone.run(() => {
             this.output += data.message + '\n';
+            this.cdr.detectChanges();
           });
         } else if (data.type === 'complete') {
           this.zone.run(() => {
@@ -133,12 +137,17 @@ export class HomeComponent implements OnInit, OnDestroy {
             this.progress = 100;
             this.output += '\n¡Traducción completada con éxito! 🎉\n';
             this.translating = false;
+            this.cdr.detectChanges();
             this.closeEventSource();
+            
+            // Mostrar el modal
+            this.showSuccessModal();
           });
         } else if (data.type === 'error') {
           this.zone.run(() => {
             this.output += '\nERROR: ' + data.message + '\n';
             this.translating = false;
+            this.cdr.detectChanges();
             this.closeEventSource();
           });
         }
@@ -152,6 +161,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.translating = false;
       this.closeEventSource();
     };
+  }
+
+  private showSuccessModal(): void {
+    const modalElement = document.getElementById('successModal');
+    if (modalElement) {
+      const modal = new bootstrap.Modal(modalElement);
+      modal.show();
+    }
   }
 
   private closeEventSource(): void {

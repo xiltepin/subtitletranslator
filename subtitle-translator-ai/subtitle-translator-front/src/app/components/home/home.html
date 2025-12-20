@@ -121,3 +121,34 @@
     </div>
   </div>
 </div>
+
+<!-- Modal de éxito -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h3 class="modal-title fw-bold" id="successModalLabel">
+          🎉 ¡Traducción Completada Exitosamente! 🔥
+        </h3>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="text-center mb-4">
+          <div class="display-1 text-success">✅</div>
+        </div>
+        <h5 class="fw-bold mb-3">Archivo generado:</h5>
+        <div class="alert alert-light border">
+          <code class="fs-6">{{ outputFile }}</code>
+        </div>
+        <p class="text-muted mb-0">
+          El archivo traducido ha sido guardado exitosamente en tu biblioteca de medios.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success btn-lg px-4" data-bs-dismiss="modal">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
