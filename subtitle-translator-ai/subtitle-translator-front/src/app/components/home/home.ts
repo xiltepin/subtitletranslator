@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, SubtitleFile } from '../../services/api';
@@ -8,6 +8,7 @@ import { FilterPipe } from '../../pipes/filter-pipe';
   selector: 'app-home',
   standalone: true,
   imports: [CommonModule, FormsModule, FilterPipe],
+  providers: [ApiService],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })
@@ -29,7 +30,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private eventSource: EventSource | null = null;
 
-  constructor(private api: ApiService, private zone: NgZone) {}
+  constructor(private api: ApiService, private zone: NgZone, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.loadFiles();
@@ -66,14 +67,16 @@ export class HomeComponent implements OnInit, OnDestroy {
         console.log('[loadFiles] SUCCESS - received', data.length, 'files');
         this.files = data;
         this.loading = false;
-        console.log('[loadFiles] DONE - loading is now false, files.length=', this.files.length);
+        this.cdr.markForCheck();
         this.output += `¡Biblioteca cargada exitosamente! 🎉\n`;
         this.output += `📁 Encontrados ${data.length} archivos .srt listos para traducir\n\n`;
         this.output += `Selecciona un archivo y pon un buen contexto para calidad máxima 🔥\n\n`;
+        console.log('[loadFiles] DONE - loading is now false, files.length=', this.files.length);
       },
       error: (err) => {
         console.log('[loadFiles] ERROR:', err);
         this.loading = false;
+        this.cdr.markForCheck();
         this.output += '❌ Error al cargar archivos: ' + (err.error?.error || err.message || 'Servidor no responde') + '\n';
         this.output += 'Asegúrate de que el backend Flask esté corriendo en http://localhost:5000\n\n';
       }
@@ -115,11 +118,10 @@ export class HomeComponent implements OnInit, OnDestroy {
         console.log('[SSE onmessage] data:', data);
 
         if (data.type === 'progress') {
-          console.log('[SSE progress] updating to', data.percent, '% (before NgZone)');
           this.zone.run(() => {
-            console.log('[SSE progress] inside NgZone.run, setting progress');
+            console.log('[SSE progress] updating to', data.percent, '%');
             this.progress = data.percent;
-            console.log('[SSE progress] after setting, progress=', this.progress);
+            console.log('[SSE progress] progress is now:', this.progress);
           });
         } else if (data.type === 'log') {
           this.zone.run(() => {
