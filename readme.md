@@ -333,17 +333,7 @@ ls -la "path/to/file.srt"
 
 # Make sure you're using the correct path with spaces in quotes
 subtranslate "/mnt/media/Series/Name With Spaces/file.srt" --lang ja
-(subtitle-env) xiltepin@Torre:~/tools/subtranslator/subtitle-translator-ai$ ls -la "/mnt/media/Series/IT Welcome to Derry/Season1/IT.Welcome.to.Derry.S01E08.1080p.HEVC.x265-MeGusta"
-total 737496
-drwxrwxrwx 1 root root       512 Dec 20 19:40 .
-drwxrwxrwx 1 root root       512 Dec 20 19:39 ..
--rwxrwxrwx 1 root root 790448869 Dec 20 19:42 IT.Welcome.to.Derry.S01E08.1080p.HEVC.x265-MeGusta.mkv
--rwxrwxrwx 1 root root      1151 Dec 20 19:40 IT.Welcome.to.Derry.S01E08.1080p.HEVC.x265-MeGusta.nfo
-drwxrwxrwx 1 root root       512 Dec 20 19:40 Screens
-(subtitle-env) xiltepin@Torre:~/tools/subtranslator/subtitle-translator-ai$ subtranslate "/mnt/media/Series/IT Welcome to Derry/Season1/IT.Welcome.to.Derry.S01E08.1080p.HEVC.x265-MeGusta/IT.Welcome.to.Derry.S01E08.1080p.HEVC.x265-MeGusta.en.srt" --lang ja --context "IT Pennywise series, is not the movie. tv series of when pennywise becomes a clown"
-
 ```
-
 
 ### Model Not Available
 ```bash
