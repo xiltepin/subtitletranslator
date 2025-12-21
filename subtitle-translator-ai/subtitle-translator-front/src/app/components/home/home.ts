@@ -20,7 +20,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   selectedFile: string = '';
   lang: string = 'ja';
   context: string = '';
-  model: string = 'gemma2:27b';
+  model: string = 'gemma3:12b';
   testMode: boolean = false;
 
   loading = false;        // para carga inicial de archivos y spinner
@@ -88,7 +88,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   loadModels(): void {
     this.api.getModels().subscribe({
       next: (data) => this.models = data,
-      error: () => this.models = ['gemma2:27b', 'gemma2:9b']
+      error: () => this.models = ['gemma3:12b', 'gemma2:9b']
     });
   }
 
