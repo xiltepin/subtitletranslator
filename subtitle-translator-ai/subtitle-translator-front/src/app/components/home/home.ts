@@ -80,7 +80,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.cdr.markForCheck();
         this.output += '❌ Error al cargar archivos: ' + (err.error?.error || err.message || 'Servidor no responde') + '\n';
-        this.output += 'Asegúrate de que el backend Flask esté corriendo en http://localhost:5000\n\n';
+        this.output += 'Asegúrate de que el backend Flask esté corriendo en http://192.168.0.6:5001\n\n';
       }
     });
   }
@@ -112,7 +112,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     params.append('model', this.model);
     if (this.testMode) params.append('test', '5');
 
-    this.eventSource = new EventSource(`http://localhost:5000/api/translate?${params.toString()}`);
+    this.eventSource = new EventSource(`http://192.168.0.6:5001/api/translate?${params.toString()}`);
 
     this.eventSource.onmessage = (event) => {
       try {

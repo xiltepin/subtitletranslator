@@ -15,7 +15,7 @@ from tqdm import tqdm
 # Configuration
 OLLAMA_HOST = "192.168.0.6"
 OLLAMA_PORT = 11434
-DEFAULT_MODEL = "gemma2:27b"
+DEFAULT_MODEL = "gemma3:12b"
 MEDIA_SERVER = "192.168.0.2"
 MEDIA_BASE = "Media"
 

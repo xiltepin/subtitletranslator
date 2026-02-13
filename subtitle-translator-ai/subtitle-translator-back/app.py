@@ -59,7 +59,7 @@ def list_files():
     except Exception as e:
         elapsed = time.time() - start_time
         print(f"\n❌ ERROR AL CARGAR LISTA DE ARCHIVOS ({elapsed:.2f}s): {str(e)}\n")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 5001
 
 
 # ==================== LISTAR MODELOS OLLAMA ====================
@@ -84,7 +84,7 @@ def translate():
     file_path = request.args.get('path')
     lang = request.args.get('lang')
     context = request.args.get('context', '')
-    model = request.args.get('model', 'gemma2:27b')
+    model = request.args.get('model', 'gemma3:12b')
     test_str = request.args.get('test')
     test = int(test_str) if test_str else None
 
@@ -94,7 +94,7 @@ def translate():
         return 'Archivo no encontrado', 404
 
     cmd = ['bash', '-u', TRANSLATE_SCRIPT, file_path, '--lang', lang]
-    if model != 'gemma2:27b':
+    if model != 'gemma3:12b':
         cmd.extend(['--model', model])
     if context.strip():
         cmd.extend(['--context', context.strip()])
@@ -175,4 +175,4 @@ if __name__ == '__main__':
     print("🚀 Subtitle Translator AI - Backend Flask")
     print(f"Media mount: {MEDIA_MOUNT}")
     print(f"Translate script: {TRANSLATE_SCRIPT}")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5001, debug=True)

@@ -82,7 +82,7 @@ subtranslate "file.en.srt" --lang ja --context "Period drama 1800s Japan samurai
 
 ## 🌍 English to Japanese Translation
 
-### Default (Best Quality) - gemma2:27b
+### Default (Best Quality) - gemma3:12b
 ```bash
 # With context (RECOMMENDED)
 subtranslate "file.en.srt" --lang ja --context "Horror series 1960s Maine supernatural clown"
@@ -94,7 +94,7 @@ subtranslate "file.en.srt" --lang ja
 subtranslate "file.en.srt" --lang ja --context "Horror 1960s" --test 5
 ```
 
-**Model**: `gemma2:27b` (default)  
+**Model**: `gemma3:12b` (default)  
 **Speed**: ~2-3 seconds per entry  
 **Quality**: Excellent
 
@@ -114,7 +114,7 @@ subtranslate "file.en.srt" --lang ja --model gemma2:9b --test 5
 
 ## 🌍 English to Spanish Translation
 
-### Default (Best Quality) - gemma2:27b
+### Default (Best Quality) - gemma3:12b
 ```bash
 # With context (RECOMMENDED)
 subtranslate "file.en.srt" --lang es --context "Horror series Stephen King 1960s Maine"
@@ -126,7 +126,7 @@ subtranslate "file.en.srt" --lang es
 subtranslate "file.en.srt" --lang es --context "Horror series" --test 5
 ```
 
-**Model**: `gemma2:27b` (default)  
+**Model**: `gemma3:12b` (default)  
 **Speed**: ~2-3 seconds per entry  
 **Quality**: Excellent
 
@@ -220,7 +220,7 @@ subtranslate "The.Office.S01E01.en.srt" --lang es \
 
 | Model | Languages | Speed | Quality | Best For |
 |-------|-----------|-------|---------|----------|
-| `gemma2:27b` | All | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | **DEFAULT** - Best overall |
+| `gemma3:12b` | All | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | **DEFAULT** - Best overall |
 | `gemma2:9b` | All | ⚡⚡⚡ Fast | ⭐⭐⭐ Good | Quick translations |
 | `gemma3:12b` | All | ⚡⚡ Medium | ⭐⭐⭐⭐ Excellent | Alternative quality option |
 | `gpt-oss:20b` | All | ⚡ Slow | ⭐⭐⭐ Good | Not recommended |
@@ -240,7 +240,7 @@ ollama ls
 ollama pull gemma2:9b
 
 # Install high-quality model (already installed)
-ollama pull gemma2:27b
+ollama pull gemma3:12b
 
 # Install alternative
 ollama pull gemma3:12b
@@ -292,7 +292,7 @@ subtranslate "file.srt" --lang ja --no-debug
 # Use faster model
 subtranslate "file.srt" --lang es --model gemma2:9b --context "comedy"
 
-# Use default (gemma2:27b)
+# Use default (gemma3:12b)
 subtranslate "file.srt" --lang ja --context "sci-fi"
 ```
 
@@ -351,7 +351,7 @@ drwxrwxrwx 1 root root       512 Dec 20 19:40 Screens
 ollama ls
 
 # Pull missing model
-ollama pull gemma2:27b
+ollama pull gemma3:12b
 ```
 
 ### Ollama Not Responding
@@ -401,13 +401,13 @@ subtranslate "file.en.srt" --lang es --model gemma2:9b
 - **Always test first** with `--test 5` before translating full files
 - **Always use context** for 30-50% better translation quality
 - **Keep context concise** - 5-15 keywords is perfect
-- **Use gemma2:27b** (default) for best quality
+- **Use gemma3:12b** (default) for best quality
 - **Use gemma2:9b** when speed matters more than quality
 - **Check the output** after test mode before running full translation
 
 ---
 
 *Script location: `/home/xiltepin/tools/subtranslator/subtitle_translator.py`*  
-*Default model: `gemma2:27b`*  
+*Default model: `gemma3:12b`*  
 *Ollama host: `192.168.0.6:11434`*  
 *Media server: `\\192.168.0.2\Media`*

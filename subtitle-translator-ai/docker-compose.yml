@@ -1,0 +1,25 @@
+services:
+
+  backend:
+    build: ./subtitle-translator-back
+    container_name: subtranslator-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - /mnt/media:/mnt/media
+      - ../../translate.sh:/app/translate.sh
+      - ../../subtitle_translator.py:/app/subtitle_translator.py
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  frontend:
+    build: ./subtitle-translator-front
+    container_name: subtranslator-frontend
+    ports:
+      - "4200:4200"
+    depends_on:
+      - backend
+    restart: unless-stopped
