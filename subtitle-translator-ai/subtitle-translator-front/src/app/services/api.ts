@@ -12,7 +12,7 @@ export interface SubtitleFile {
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://192.168.0.6:5001/api';
+  private baseUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

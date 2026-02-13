@@ -6,13 +6,15 @@ import re
 import functools
 import time
 import json
+import requests
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuración
 MEDIA_MOUNT = '/mnt/media'
-TRANSLATE_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../translate.sh'))
+TRANSLATE_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), './translate.sh'))
+OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://host.docker.internal:11434')
 
 # ==================== CACHE PARA LISTA DE ARCHIVOS ====================
 def get_ttl_hash(seconds=300):
@@ -59,21 +61,22 @@ def list_files():
     except Exception as e:
         elapsed = time.time() - start_time
         print(f"\n❌ ERROR AL CARGAR LISTA DE ARCHIVOS ({elapsed:.2f}s): {str(e)}\n")
-        return jsonify({'error': str(e)}), 5001
+        return jsonify({'error': str(e)}), 500
 
 
 # ==================== LISTAR MODELOS OLLAMA ====================
 @app.route('/api/models', methods=['GET'])
 def get_models():
     try:
-        result = subprocess.run(['ollama', 'ls'], capture_output=True, text=True, timeout=10)
-        if result.returncode == 0:
-            lines = [l for l in result.stdout.strip().split('\n') if l.strip()]
-            models = [line.split()[0] for line in lines[1:]] if len(lines) > 1 else []
+        response = requests.get(f'{OLLAMA_HOST}/api/tags', timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            models = [model['name'] for model in data.get('models', [])]
+            print(f"📋 Modelos Ollama disponibles: {models}")
             return jsonify(models)
         return jsonify([])
     except Exception as e:
-        print(f"Error listando modelos Ollama: {e}")
+        print(f"❌ Error listando modelos Ollama: {e}")
         return jsonify([])
 
 
@@ -158,10 +161,11 @@ def translate():
 
     # ¡ESTA LÍNEA ES OBLIGATORIA!
     return Response(generate(), mimetype='text/event-stream')
+
 # ==================== LEER README ====================
 @app.route('/api/readme', methods=['GET'])
 def get_readme():
-    readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../readme.md'))
+    readme_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'readme.md'))
     try:
         with open(readme_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -175,4 +179,5 @@ if __name__ == '__main__':
     print("🚀 Subtitle Translator AI - Backend Flask")
     print(f"Media mount: {MEDIA_MOUNT}")
     print(f"Translate script: {TRANSLATE_SCRIPT}")
+    print(f"Ollama host: {OLLAMA_HOST}")
     app.run(host='0.0.0.0', port=5001, debug=True)

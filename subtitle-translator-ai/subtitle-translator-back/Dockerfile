@@ -1,16 +1,17 @@
 FROM python:3.11-slim
-
 WORKDIR /app
 
-# system deps (optional but safe)
+# System dependencies
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# copy backend code
+# Copy backend code
 COPY . .
 
-# install python deps
-RUN pip install --no-cache-dir flask flask-cors
+# Install Python dependencies (added tqdm and requests for subtitle_translator.py)
+RUN pip install --no-cache-dir flask flask-cors openai requests tqdm
+
+# Make translate.sh executable
+RUN chmod +x translate.sh
 
 EXPOSE 5001
-
 CMD ["python", "app.py"]
