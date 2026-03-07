@@ -5,10 +5,13 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - /mnt/media:/mnt/media
+      # MAPEAMOS LA RUTA DE LA NUC (/mnt/syno) AL INTERIOR DEL CONTENEDOR (/mnt/media)
+      - /mnt/syno:/mnt/media
     environment:
+      # APUNTA A TU TORRE PARA USAR LA RTX 5060 Ti
       - OLLAMA_HOST=http://192.168.0.6:11434
     restart: unless-stopped
+
   frontend:
     build: ./subtitle-translator-front
     container_name: subtranslator-frontend

@@ -7,6 +7,7 @@ import functools
 import time
 import json
 import requests
+import threading
 
 app = Flask(__name__)
 CORS(app)
@@ -174,10 +175,26 @@ def get_readme():
         return jsonify({'content': f'Error leyendo README: {str(e)}'})
 
 
+# ==================== PRE-CALENTAR CACHE ====================
+def prewarm_cache():
+    """Pre-carga la lista de archivos en background para que la primera request sea instantánea."""
+    print("\n🔄 PRE-CALENTANDO CACHE DE ARCHIVOS...")
+    start = time.time()
+    try:
+        files = cached_list_files(ttl_hash=get_ttl_hash(300))
+        elapsed = time.time() - start
+        print(f"✅ CACHE PRE-CALENTADO: {len(files)} archivos .srt en {elapsed:.1f}s\n")
+    except Exception as e:
+        elapsed = time.time() - start
+        print(f"❌ ERROR PRE-CALENTANDO CACHE ({elapsed:.1f}s): {e}\n")
+
+
 # ==================== INICIO DEL SERVIDOR ====================
 if __name__ == '__main__':
     print("🚀 Subtitle Translator AI - Backend Flask")
     print(f"Media mount: {MEDIA_MOUNT}")
     print(f"Translate script: {TRANSLATE_SCRIPT}")
     print(f"Ollama host: {OLLAMA_HOST}")
+    # Pre-calentar cache en background thread
+    threading.Thread(target=prewarm_cache, daemon=True).start()
     app.run(host='0.0.0.0', port=5001, debug=True)
