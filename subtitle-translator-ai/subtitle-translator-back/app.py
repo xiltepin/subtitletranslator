@@ -3,11 +3,9 @@ from flask_cors import CORS
 import subprocess
 import os
 import re
-import functools
 import time
 import json
 import requests
-import threading
 
 app = Flask(__name__)
 CORS(app)
@@ -17,48 +15,50 @@ MEDIA_MOUNT = '/mnt/media'
 TRANSLATE_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), './translate.sh'))
 OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://host.docker.internal:11434')
 
-# ==================== CACHE PARA LISTA DE ARCHIVOS ====================
-def get_ttl_hash(seconds=300):
-    return round(time.time() / seconds)
-
-@functools.lru_cache(maxsize=1)
-def cached_list_files(ttl_hash):
-    srt_files = []
-    base_paths = [
-        os.path.join(MEDIA_MOUNT, 'Series'),
-        os.path.join(MEDIA_MOUNT, 'Movies')
-    ]
-    
-    for base_path in base_paths:
-        if not os.path.exists(base_path):
-            continue
-        for root, dirs, files in os.walk(base_path):
-            # Excluir carpetas innecesarias
-            dirs[:] = [d for d in dirs if not d.startswith('#') and d not in ['Temp', 'Tools', 'PersonalVideos']]
-            for file in files:
-                if file.lower().endswith('.srt'):
-                    full_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(full_path, MEDIA_MOUNT)
-                    srt_files.append({
-                        'path': full_path,
-                        'name': file,
-                        'relative': rel_path.replace(os.sep, '/')
-                    })
-    srt_files.sort(key=lambda x: x['relative'].lower())
-    return srt_files
-
+# ==================== LISTAR ARCHIVOS .SRT ====================
 @app.route('/api/files', methods=['GET'])
 def list_files():
     start_time = time.time()
     try:
-        files = cached_list_files(ttl_hash=get_ttl_hash(300))
+        base_paths = [
+            os.path.join(MEDIA_MOUNT, 'Series'),
+            os.path.join(MEDIA_MOUNT, 'Movies')
+        ]
+        # Usar 'find' nativo es mucho más rápido que os.walk sobre NFS
+        existing_paths = [p for p in base_paths if os.path.exists(p)]
+        if not existing_paths:
+            return jsonify([])
+
+        cmd = ['find'] + existing_paths + [
+            '-name', '*.srt', '-type', 'f',
+            '-not', '-path', '*/#recycle/*',
+            '-not', '-path', '*/Temp/*',
+            '-not', '-path', '*/Tools/*',
+            '-not', '-path', '*/PersonalVideos/*'
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        
+        srt_files = []
+        for line in result.stdout.strip().split('\n'):
+            if not line:
+                continue
+            full_path = line.strip()
+            file_name = os.path.basename(full_path)
+            rel_path = os.path.relpath(full_path, MEDIA_MOUNT)
+            srt_files.append({
+                'path': full_path,
+                'name': file_name,
+                'relative': rel_path.replace(os.sep, '/')
+            })
+        
+        srt_files.sort(key=lambda x: x['relative'].lower())
         elapsed = time.time() - start_time
-        count = len(files)
+        count = len(srt_files)
         print(f"\n✅ LISTA DE ARCHIVOS CARGADA EXITOSAMENTE")
         print(f"   📁 Archivos .srt encontrados: {count}")
         print(f"   ⏱️  Tiempo de carga: {elapsed:.2f} segundos")
-        print(f"   📍 Rutas escaneadas: /mnt/media/Series y /mnt/media/Movies\n")
-        return jsonify(files)
+        print(f"   📍 Rutas escaneadas: {', '.join(existing_paths)}\n")
+        return jsonify(srt_files)
     except Exception as e:
         elapsed = time.time() - start_time
         print(f"\n❌ ERROR AL CARGAR LISTA DE ARCHIVOS ({elapsed:.2f}s): {str(e)}\n")
@@ -175,26 +175,10 @@ def get_readme():
         return jsonify({'content': f'Error leyendo README: {str(e)}'})
 
 
-# ==================== PRE-CALENTAR CACHE ====================
-def prewarm_cache():
-    """Pre-carga la lista de archivos en background para que la primera request sea instantánea."""
-    print("\n🔄 PRE-CALENTANDO CACHE DE ARCHIVOS...")
-    start = time.time()
-    try:
-        files = cached_list_files(ttl_hash=get_ttl_hash(300))
-        elapsed = time.time() - start
-        print(f"✅ CACHE PRE-CALENTADO: {len(files)} archivos .srt en {elapsed:.1f}s\n")
-    except Exception as e:
-        elapsed = time.time() - start
-        print(f"❌ ERROR PRE-CALENTANDO CACHE ({elapsed:.1f}s): {e}\n")
-
-
 # ==================== INICIO DEL SERVIDOR ====================
 if __name__ == '__main__':
     print("🚀 Subtitle Translator AI - Backend Flask")
     print(f"Media mount: {MEDIA_MOUNT}")
     print(f"Translate script: {TRANSLATE_SCRIPT}")
     print(f"Ollama host: {OLLAMA_HOST}")
-    # Pre-calentar cache en background thread
-    threading.Thread(target=prewarm_cache, daemon=True).start()
     app.run(host='0.0.0.0', port=5001, debug=True)
