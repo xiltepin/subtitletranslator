@@ -1,59 +1,83 @@
-# SubtitleTranslatorFront
+# Frontend — Angular UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.4.
+Angular 21 frontend for the Subtitle Translator AI.  
+Runs as a Docker container on the LXC host (`192.168.0.4`), exposed via Nginx Proxy Manager.
 
-## Development server
+## Environment
 
-To start a local development server, run:
+| Item | Value |
+|------|-------|
+| Public URL | `https://subs.xiltepin.me` |
+| Port (host) | `4200` |
+| Port (container) | `4200` |
+| Backend API | `http://subtranslator-backend:5001` (internal Docker network) |
+
+## Running (Docker — recommended)
 
 ```bash
+cd /root/Tools/subtranslator/subtitle-translator-ai
+
+# Start all services
+docker compose up -d
+
+# Rebuild after UI changes
+docker compose up -d --build frontend
+
+# Logs
+docker compose logs -f frontend
+```
+
+## Development (local — without Docker)
+
+```bash
+cd subtitle-translator-front
+
+# Install dependencies
+npm install
+
+# Start dev server (hot reload)
 ng serve
+# → http://localhost:4200
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Build
 
 ```bash
+# Production build (not needed for Docker)
+ng build
+# Output in dist/
+```
+
+## Code Scaffolding
+
+```bash
+# Generate a new component
 ng generate component component-name
-```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
+# List all available schematics
 ng generate --help
 ```
 
-## Building
-
-To build the project run:
+## Testing
 
 ```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
+# Unit tests (Vitest)
 ng test
-```
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
+# End-to-end tests
 ng e2e
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Key Files
+
+| File/Folder | Purpose |
+|-------------|---------|
+| `src/app/` | Angular components and services |
+| `src/environments/` | API endpoint configuration |
+| `Dockerfile` | Container build (serves via `ng serve --host 0.0.0.0`) |
+| `package.json` | NPM dependencies |
 
 ## Additional Resources
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+- [Angular CLI Documentation](https://angular.dev/tools/cli)
+- [Angular 21 Release Notes](https://blog.angular.dev/)

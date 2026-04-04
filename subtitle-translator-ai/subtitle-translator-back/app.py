@@ -88,7 +88,7 @@ def translate():
     file_path = request.args.get('path')
     lang = request.args.get('lang')
     context = request.args.get('context', '')
-    model = request.args.get('model', 'gemma3:12b')
+    model = request.args.get('model', 'gemma4:latest')
     test_str = request.args.get('test')
     test = int(test_str) if test_str else None
 
@@ -98,7 +98,7 @@ def translate():
         return 'Archivo no encontrado', 404
 
     cmd = ['bash', '-u', TRANSLATE_SCRIPT, file_path, '--lang', lang]
-    if model != 'gemma3:12b':
+    if model != 'gemma4:latest':
         cmd.extend(['--model', model])
     if context.strip():
         cmd.extend(['--context', context.strip()])
