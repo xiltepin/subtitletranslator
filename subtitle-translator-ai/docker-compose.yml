@@ -6,7 +6,7 @@ services:
       - "5001:5001"
     volumes:
       # MAPEAMOS LA RUTA DE LA NUC (/mnt/syno) AL INTERIOR DEL CONTENEDOR (/mnt/media)
-      - /mnt/syno:/mnt/media
+      - /mnt/synology:/mnt/media
     environment:
       # APUNTA A TU TORRE PARA USAR LA RTX 5060 Ti
       - OLLAMA_HOST=http://192.168.0.6:11434
