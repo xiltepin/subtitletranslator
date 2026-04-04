@@ -4,13 +4,13 @@
 
 | Component | Value |
 |-----------|-------|
-| **Host** | `192.168.0.4` — LXC container on Proxmox (Linux Debian) |
-| **Media server (NAS)** | `192.168.0.2` — Synology NAS |
-| **NAS mount point (host)** | `/mnt/synology` |
-| **NAS mount point (container)** | `/mnt/media` (mapped via Docker volume) |
-| **Ollama (GPU inference)** | `http://192.168.0.6:11434` — RTX 5060 Ti tower |
-| **Web UI** | `https://subs.xiltepin.me` → `http://192.168.0.4:4200` |
-| **Backend API** | `http://192.168.0.4:5001` |
+| **Host** | `<LXC_HOST_IP>` — LXC container |
+| **Media server (NAS)** | `<MEDIA_SERVER>` |
+| **NAS mount point (host)** | `<NAS_MOUNT_HOST>` |
+| **NAS mount point (container)** | `<NAS_MOUNT_CONTAINER>` (mapped via Docker volume) |
+| **Ollama (GPU inference)** | `<OLLAMA_HOST>` |
+| **Web UI** | `<WEB_UI_URL>` → `http://<LXC_HOST_IP>:4200` |
+| **Backend API** | `http://<LXC_HOST_IP>:5001` |
 
 ---
 
@@ -233,7 +233,7 @@ docker compose logs -f backend
 
 ### Check Ollama Models (from host)
 ```bash
-curl http://192.168.0.6:11434/api/tags
+curl <OLLAMA_HOST>/api/tags
 ```
 
 ### Find Subtitle Files (from host)
@@ -305,7 +305,7 @@ cat /etc/fstab | grep synology
 
 ### Model Not Available
 ```bash
-# On the Ollama machine (192.168.0.6)
+# On the Ollama machine
 ollama ls
 ollama pull gemma3:12b
 ```
@@ -313,7 +313,7 @@ ollama pull gemma3:12b
 ### Ollama Not Responding
 ```bash
 # Test from LXC host
-curl http://192.168.0.6:11434/api/tags
+curl <OLLAMA_HOST>/api/tags
 ```
 
 ### Container Not Starting
@@ -349,7 +349,7 @@ docker compose logs -f
 ---
 
 *Script: `/root/Tools/subtranslator/subtitle-translator-ai/subtitle-translator-back/subtitle_translator.py`*  
-*Default model: `gemma3:12b`*  
-*Ollama host: `http://192.168.0.6:11434`*  
-*Media host (NAS): `192.168.0.2` — mounted at `/mnt/synology` on host, `/mnt/media` in container*  
+*Default model: `gemma4:latest`*  
+*Ollama host: `<OLLAMA_HOST>`*  
+*Media host (NAS): `<MEDIA_SERVER>` — mounted at `<NAS_MOUNT_HOST>` on host, `<NAS_MOUNT_CONTAINER>` in container*  
 *Updated: 2026-04-04*

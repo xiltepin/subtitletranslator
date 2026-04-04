@@ -47,8 +47,8 @@
             "allowedHosts": [
               "localhost",
               "127.0.0.1",
-              "192.168.0.4",
-              "subs.xiltepin.me"
+              "subs.xiltepin.me",
+              "all"
             ]
           },
           "configurations": {

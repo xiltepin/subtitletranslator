@@ -1,13 +1,13 @@
 # Frontend — Angular UI
 
 Angular 21 frontend for the Subtitle Translator AI.  
-Runs as a Docker container on the LXC host (`192.168.0.4`), exposed via Nginx Proxy Manager.
+Runs as a Docker container on the LXC host (`<LXC_HOST_IP>`), exposed via Nginx Proxy Manager.
 
 ## Environment
 
 | Item | Value |
 |------|-------|
-| Public URL | `https://subs.xiltepin.me` |
+| Public URL | `<WEB_UI_URL>` |
 | Port (host) | `4200` |
 | Port (container) | `4200` |
 | Backend API | `http://subtranslator-backend:5001` (internal Docker network) |

@@ -5,11 +5,11 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      # MAPEAMOS LA RUTA DE LA NUC (/mnt/syno) AL INTERIOR DEL CONTENEDOR (/mnt/media)
-      - /mnt/synology:/mnt/media
+      # MAPEAMOS LA RUTA DE LA NUC AL INTERIOR DEL CONTENEDOR
+      - ${NAS_MOUNT_HOST:-/mnt/synology}:${NAS_MOUNT_CONTAINER:-/mnt/media}
     environment:
       # APUNTA A TU TORRE PARA USAR LA RTX 5060 Ti
-      - OLLAMA_HOST=http://192.168.0.6:11434
+      - OLLAMA_HOST=${OLLAMA_HOST}
     restart: unless-stopped
 
   frontend:

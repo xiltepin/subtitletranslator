@@ -13,7 +13,7 @@ CORS(app)
 # Configuración
 MEDIA_MOUNT = '/mnt/media'
 TRANSLATE_SCRIPT = os.path.abspath(os.path.join(os.path.dirname(__file__), './translate.sh'))
-OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://host.docker.internal:11434')
+OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://127.0.0.1:11434')
 
 # ==================== LISTAR ARCHIVOS .SRT ====================
 @app.route('/api/files', methods=['GET'])

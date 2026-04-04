@@ -11,12 +11,20 @@ import time
 from pathlib import Path
 from typing import List
 from tqdm import tqdm
+from dotenv import load_dotenv
 
-# Configuration
-OLLAMA_HOST = "192.168.0.6"
-OLLAMA_PORT = 11434
+load_dotenv()
+
+OLLAMA_HOST_URL = os.getenv("OLLAMA_HOST")
+if OLLAMA_HOST_URL:
+    OLLAMA_HOST = OLLAMA_HOST_URL.replace("http://", "").split(":")[0]
+    OLLAMA_PORT = int(OLLAMA_HOST_URL.split(":")[-1])
+else:
+    OLLAMA_HOST = ""
+    OLLAMA_PORT = 11434
+
 DEFAULT_MODEL = "gemma4:latest"
-MEDIA_SERVER = "192.168.0.2"
+MEDIA_SERVER = os.getenv("MEDIA_SERVER")
 MEDIA_BASE = "Media"
 
 # Debug flag

@@ -1,7 +1,7 @@
 # Backend — Flask API
 
 Python 3.11 / Flask backend that serves the subtitle translation API.  
-Runs as a Docker container on the LXC host (`192.168.0.4`).
+Runs as a Docker container on the LXC host (`<LXC_HOST_IP>`).
 
 ## Environment
 
@@ -9,9 +9,9 @@ Runs as a Docker container on the LXC host (`192.168.0.4`).
 |------|-------|
 | Port (host) | `5001` |
 | Port (container) | `5001` |
-| Media mount (host) | `/mnt/synology` |
-| Media mount (container) | `/mnt/media` |
-| Ollama | `http://192.168.0.6:11434` (set via `OLLAMA_HOST` env var) |
+| Media mount (host) | `<NAS_MOUNT_HOST>` |
+| Media mount (container) | `<NAS_MOUNT_CONTAINER>` |
+| Ollama | `<OLLAMA_HOST>` (set via `OLLAMA_HOST` env var) |
 
 ## API Endpoints
 
@@ -65,11 +65,11 @@ python3 app.py
 
 ## Configuration
 
-All configuration is handled via environment variables in `docker-compose.yml`:
+All configuration is handled via environment variables in `docker-compose.yml` or `.env`:
 
 ```yaml
 environment:
-  - OLLAMA_HOST=http://192.168.0.6:11434
+  - OLLAMA_HOST=${OLLAMA_HOST}
 ```
 
-The media path inside the container is always `/mnt/media`, mapped from `/mnt/synology` on the host.
+The media path inside the container is mapped from `<NAS_MOUNT_HOST>` on the host to `<NAS_MOUNT_CONTAINER>`.
