@@ -1,0 +1,10 @@
+feat: gemma4:26b - fix thinking/notes output, add test scripts
+
+- Switch default model to gemma4:26b
+- Rewrite prompt using Gemma native chat format to suppress thinking output
+- Add aggressive post-processing: strip think blocks, Note/Translation
+  prefixes, meta-commentary lines, quote wrappers
+- Add debug logging of RAW vs CLEANED responses
+- Add test_terminator_ja.sh: 50-line Japanese translation test script
+- Add push_gitea.sh: helper for Gitea HTTP push
+- Update .gitignore: exclude setup_gitea.sh
