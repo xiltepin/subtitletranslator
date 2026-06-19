@@ -15,7 +15,7 @@ from tqdm import tqdm
 # Configuration
 OLLAMA_HOST = "192.168.0.6"
 OLLAMA_PORT = 11434
-DEFAULT_MODEL = "gemma3:12b"
+DEFAULT_MODEL = "gemma4:26b"
 MEDIA_SERVER = "192.168.0.2"
 MEDIA_BASE = "Media"
 
@@ -106,21 +106,14 @@ For Spanish:
 - Match formality (tú/usted) to relationships
 """
     
-    prompt = f"""Translate to {target_lang_name}.
+    prompt = f"""<start_of_turn>user
+Translate the following subtitle text to {target_lang_name}. Output ONLY the translated text. Do not think out loud. Do not add notes, explanations, alternatives, or any commentary. Do not include the original text. Do not use tags like <think> or <answer>. Just output the raw translation.
 {context_section}{lang_guidelines}
-CRITICAL RULES:
-- Output ONLY the {target_lang_name} translation
-- NO Chinese (中文) unless translating TO Chinese
-- NO Korean (한글) unless translating TO Korean  
-- NO Japanese unless translating TO Japanese
-- NO explanations, notes, or commentary
-- Preserve line breaks exactly
-- No preamble like "Translation:"
-
-Text:
+Subtitle text:
 {text}
-
-{target_lang_name}:"""
+<end_of_turn>
+<start_of_turn>model
+"""
 
     payload = {
         "model": model,
@@ -134,9 +127,27 @@ Text:
         response.raise_for_status()
         translation = response.json().get('response', '').strip()
         
-        # Aggressive cleanup
-        translation = re.sub(r'^(Translation|Note|注意|注释|注|說明|번역|참고|메모|Traducción|Nota).*?[:：]\s*', '', translation, flags=re.MULTILINE | re.IGNORECASE)
-        translation = re.sub(r'^\s*(Translation|Note|Traducción|Nota)\s*$', '', translation, flags=re.MULTILINE | re.IGNORECASE)
+        debug_print(f"RAW response: {repr(translation[:300])}")
+        
+        # Strip gemma4 thinking/reasoning blocks: <think>...</think> or <thinking>...</thinking>
+        translation = re.sub(r'<think(?:ing)?>.*?</think(?:ing)?>', '', translation, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Strip lines that are model "meta-commentary" (thinking out loud)
+        # These often appear as "Note:", "Translation:", "Here is...", etc.
+        translation = re.sub(
+            r'^(?:Note|Translation|Nota|Traducción|Hinweis|Note de traduction|翻訳|翻译|번역|참고|メモ|Here(?:\s+is)?|Below\s+is|The\s+translation|I(?:\'ll|\s+will|\s+have)|Certainly|Sure|Of\s+course|As\s+requested)[^\n]*\n?',
+            '', translation, flags=re.MULTILINE | re.IGNORECASE
+        )
+        
+        # Strip lines starting with "- " that are explanatory bullets (not actual subtitle content)
+        # Only strip if the line looks like a meta-note (contains phrases like "Note", "translation", etc.)
+        translation = re.sub(
+            r'^[\*\-]\s+(?:Note|Translation|Explanation|Alternative)[^\n]*\n?',
+            '', translation, flags=re.MULTILINE | re.IGNORECASE
+        )
+        
+        # Remove quote wrappers like "translated text" or 'translated text'
+        translation = re.sub(r'^["\'](.+)["\']$', r'\1', translation.strip(), flags=re.DOTALL)
         
         # Remove pure Korean lines
         translation = re.sub(r'^[\uAC00-\uD7A3\s\u3131-\u318E\uFFA0-\uFFDC]+$', '', translation, flags=re.MULTILINE)
@@ -155,6 +166,8 @@ Text:
             translation = '\n'.join(filtered)
         
         translation = re.sub(r'\n{3,}', '\n\n', translation.strip())
+        
+        debug_print(f"CLEANED: {repr(translation[:200])}")
         return translation
     except Exception as e:
         debug_print(f"Translation error: {e}")

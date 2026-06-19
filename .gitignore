@@ -79,3 +79,6 @@ subtitle-env/
 
 # Entorno virtual externo recomendado
 ~/subtitle-translator-venv/
+
+# Setup scripts with credentials
+setup_gitea.sh
