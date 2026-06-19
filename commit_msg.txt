@@ -1,6 +1,6 @@
-feat: gemma4:26b - fix thinking/notes output, add test scripts
+feat: gemma4:e4b - fix thinking/notes output, add test scripts
 
-- Switch default model to gemma4:26b
+- Switch default model to gemma4:e4b
 - Rewrite prompt using Gemma native chat format to suppress thinking output
 - Add aggressive post-processing: strip think blocks, Note/Translation
   prefixes, meta-commentary lines, quote wrappers
