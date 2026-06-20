@@ -1,10 +1,12 @@
-feat: gemma4:e4b - fix thinking/notes output, add test scripts
+fix: progress bar and live log in web UI
 
-- Switch default model to gemma4:e4b
-- Rewrite prompt using Gemma native chat format to suppress thinking output
-- Add aggressive post-processing: strip think blocks, Note/Translation
-  prefixes, meta-commentary lines, quote wrappers
-- Add debug logging of RAW vs CLEANED responses
-- Add test_terminator_ja.sh: 50-line Japanese translation test script
-- Add push_gitea.sh: helper for Gitea HTTP push
-- Update .gitignore: exclude setup_gitea.sh
+- Remove tqdm from backend subtitle_translator.py (web version)
+  tqdm writes to stderr with \r not \n, so subprocess stdout pipe
+  never received any progress lines - progress bar stuck at 0%
+- Replace with explicit print(flush=True) on every subtitle translated,
+  emitting "Translating: XX%|..." format that app.py already parses
+- Apply same gemma4 anti-thinking prompt fixes to backend version
+- Frontend: filter raw progress lines from log panel (already shown
+  in visual progress bar - no need to clutter the log)
+- Frontend: auto-scroll live log pre element on each new message
+  so user always sees the latest output without manual scrolling

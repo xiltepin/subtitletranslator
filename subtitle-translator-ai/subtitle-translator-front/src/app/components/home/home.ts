@@ -128,8 +128,13 @@ export class HomeComponent implements OnInit, OnDestroy {
           });
         } else if (data.type === 'log') {
           this.zone.run(() => {
-            this.output += data.message + '\n';
-            this.cdr.detectChanges();
+            // Filter out raw tqdm-style progress lines — already shown in the visual progress bar
+            const isProgressLine = /^Translating:\s+\d+%\|/.test(data.message);
+            if (!isProgressLine) {
+              this.output += data.message + '\n';
+              this.cdr.detectChanges();
+              this.scrollLog();
+            }
           });
         } else if (data.type === 'complete') {
           this.zone.run(() => {
@@ -169,6 +174,14 @@ export class HomeComponent implements OnInit, OnDestroy {
       const modal = new bootstrap.Modal(modalElement);
       modal.show();
     }
+  }
+
+  private scrollLog(): void {
+    // Auto-scroll the live log to the bottom so latest output is always visible
+    setTimeout(() => {
+      const log = document.getElementById('liveLog');
+      if (log) log.scrollTop = log.scrollHeight;
+    }, 0);
   }
 
   private closeEventSource(): void {

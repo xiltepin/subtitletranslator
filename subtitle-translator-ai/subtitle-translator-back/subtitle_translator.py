@@ -10,7 +10,6 @@ import requests
 import time
 from pathlib import Path
 from typing import List
-from tqdm import tqdm
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -34,7 +33,7 @@ DEBUG = True
 def debug_print(message: str):
     if DEBUG:
         timestamp = time.strftime("%H:%M:%S")
-        print(f"[DEBUG {timestamp}] {message}")
+        print(f"[DEBUG {timestamp}] {message}", flush=True)
 
 
 class SubtitleEntry:
@@ -69,11 +68,11 @@ def test_ollama_connection(model: str) -> bool:
         response.raise_for_status()
         models = [m.get('name', '') for m in response.json().get('models', [])]
         if model not in models:
-            print(f"Warning: Model '{model}' not available")
+            print(f"Warning: Model '{model}' not available", flush=True)
             return False
         return True
     except Exception as e:
-        print(f"Error connecting to Ollama: {e}")
+        print(f"Error connecting to Ollama: {e}", flush=True)
         return False
 
 
@@ -114,21 +113,15 @@ For Spanish:
 - Match formality (tú/usted) to relationships
 """
     
-    prompt = f"""Translate to {target_lang_name}.
+    # Use Gemma native chat format to suppress thinking/reasoning output
+    prompt = f"""<start_of_turn>user
+Translate the following subtitle text to {target_lang_name}. Output ONLY the translated text. Do not think out loud. Do not add notes, explanations, alternatives, or any commentary. Do not include the original text. Do not use tags like <think> or <answer>. Just output the raw translation.
 {context_section}{lang_guidelines}
-CRITICAL RULES:
-- Output ONLY the {target_lang_name} translation
-- NO Chinese (中文) unless translating TO Chinese
-- NO Korean (한글) unless translating TO Korean  
-- NO Japanese unless translating TO Japanese
-- NO explanations, notes, or commentary
-- Preserve line breaks exactly
-- No preamble like "Translation:"
-
-Text:
+Subtitle text:
 {text}
-
-{target_lang_name}:"""
+<end_of_turn>
+<start_of_turn>model
+"""
 
     payload = {
         "model": model,
@@ -142,9 +135,23 @@ Text:
         response.raise_for_status()
         translation = response.json().get('response', '').strip()
         
-        # Aggressive cleanup
-        translation = re.sub(r'^(Translation|Note|注意|注释|注|說明|번역|참고|메모|Traducción|Nota).*?[:：]\s*', '', translation, flags=re.MULTILINE | re.IGNORECASE)
-        translation = re.sub(r'^\s*(Translation|Note|Traducción|Nota)\s*$', '', translation, flags=re.MULTILINE | re.IGNORECASE)
+        # Strip gemma4 thinking/reasoning blocks: <think>...</think> or <thinking>...</thinking>
+        translation = re.sub(r'<think(?:ing)?>.*?</think(?:ing)?>', '', translation, flags=re.DOTALL | re.IGNORECASE)
+        
+        # Strip meta-commentary lines (Note:, Here is..., Translation:, etc.)
+        translation = re.sub(
+            r'^(?:Note|Translation|Nota|Traducción|Hinweis|Note de traduction|翻訳|翻译|번역|참고|メモ|Here(?:\s+is)?|Below\s+is|The\s+translation|I(?:\'ll|\s+will|\s+have)|Certainly|Sure|Of\s+course|As\s+requested)[^\n]*\n?',
+            '', translation, flags=re.MULTILINE | re.IGNORECASE
+        )
+        
+        # Strip explanatory bullet points
+        translation = re.sub(
+            r'^[\*\-]\s+(?:Note|Translation|Explanation|Alternative)[^\n]*\n?',
+            '', translation, flags=re.MULTILINE | re.IGNORECASE
+        )
+        
+        # Remove quote wrappers
+        translation = re.sub(r'^["\'](.+)["\']$', r'\1', translation.strip(), flags=re.DOTALL)
         
         # Remove pure Korean lines
         translation = re.sub(r'^[\uAC00-\uD7A3\s\u3131-\u318E\uFFA0-\uFFDC]+$', '', translation, flags=re.MULTILINE)
@@ -205,15 +212,15 @@ def generate_output_filename(input_path: str, target_lang: str) -> str:
 
 
 def translate_subtitle_file(input_path: str, target_lang: str, model: str, max_entries: int = None, context: str = None):
-    print(f"\n{'='*60}")
-    print(f"Subtitle Translation Started")
-    print(f"{'='*60}")
-    print(f"Input: {input_path}")
-    print(f"Target: {target_lang.upper()}")
-    print(f"Model: {model}")
+    print(f"\n{'='*60}", flush=True)
+    print(f"Subtitle Translation Started", flush=True)
+    print(f"{'='*60}", flush=True)
+    print(f"Input: {input_path}", flush=True)
+    print(f"Target: {target_lang.upper()}", flush=True)
+    print(f"Model: {model}", flush=True)
     if context:
-        print(f"Context: {context[:80]}{'...' if len(context) > 80 else ''}")
-    print(f"{'='*60}\n")
+        print(f"Context: {context[:80]}{'...' if len(context) > 80 else ''}", flush=True)
+    print(f"{'='*60}\n", flush=True)
 
     if not test_ollama_connection(model):
         raise Exception("Model not available")
@@ -224,29 +231,43 @@ def translate_subtitle_file(input_path: str, target_lang: str, model: str, max_e
     entries = parse_srt(content)
     if max_entries:
         entries = entries[:max_entries]
-        print(f"TEST MODE: First {max_entries} entries")
+        print(f"TEST MODE: First {max_entries} entries", flush=True)
 
-    print(f"Translating {len(entries)} subtitles...\n")
+    total = len(entries)
+    print(f"Translating {total} subtitles...\n", flush=True)
 
     translated_entries = []
     start_time = time.time()
 
-    with tqdm(total=len(entries), desc="Translating", unit="line", colour="cyan") as pbar:
-        for entry in entries:
-            translated_text = translate_text(entry.text, target_lang, model, context)
-            translated_entries.append(SubtitleEntry(entry.index, entry.timestamp, translated_text))
-            pbar.update(1)
+    for i, entry in enumerate(entries):
+        translated_text = translate_text(entry.text, target_lang, model, context)
+        translated_entries.append(SubtitleEntry(entry.index, entry.timestamp, translated_text))
+
+        # Emit tqdm-compatible progress line on every subtitle — app.py parses (\d+)%|
+        done = i + 1
+        pct = int(done * 100 / total)
+        elapsed = time.time() - start_time
+        rate = done / elapsed if elapsed > 0 else 0
+        remaining = (total - done) / rate if rate > 0 else 0
+        bar_filled = int(pct / 5)
+        bar = '█' * bar_filled + '░' * (20 - bar_filled)
+        print(
+            f"Translating: {pct:3d}%|{bar}| {done}/{total} "
+            f"[{int(elapsed//60):02d}:{int(elapsed%60):02d}<{int(remaining//60):02d}:{int(remaining%60):02d}, "
+            f"{rate:.2f}line/s]",
+            flush=True
+        )
 
     total_time = time.time() - start_time
-    print(f"\n✓ Complete! {total_time:.1f}s ({total_time/len(entries):.2f}s per line)")
+    print(f"\n✓ Complete! {total_time:.1f}s ({total_time/total:.2f}s per line)", flush=True)
 
     output_path = generate_output_filename(input_path, target_lang)
     with open(output_path, 'w', encoding='utf-8') as f:
         for e in translated_entries:
             f.write(f"{e.index}\n{e.timestamp}\n{e.text}\n\n")
 
-    print(f"\nSaved: {output_path}")
-    print(f"{'='*60}\n")
+    print(f"\nSaved: {output_path}", flush=True)
+    print(f"{'='*60}\n", flush=True)
 
 
 def main():

@@ -104,7 +104,8 @@
         <!-- Log en vivo -->
         <div class="mt-5" *ngIf="output">
           <h4 class="fw-bold text-primary">Log en vivo</h4>
-          <pre class="bg-dark text-light p-4 rounded shadow-lg" 
+          <pre id="liveLog"
+               class="bg-dark text-light p-4 rounded shadow-lg" 
                style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; font-size: 1rem;">{{ output }}</pre>
 
           <!-- Mensaje final de éxito -->
